@@ -89,6 +89,9 @@ def comment_Out_Class(input: str  = typer.Argument(...), cls: str  = typer.Argum
     #System call to get ast dump of anything containing the string inputted in cls (cls stands for class)
     sys = "clang-check -ast-dump -ast-dump-filter={} test.cpp --".format(cls)
     ret = os.popen(sys).read()
+    if ret == "":
+        print("Class not found.")
+        return
 
     #Filter the code using regex to keep what is important
     regex = r"Dumping {}:\nCXXRecordDecl.*?\n(\|)".format(cls)
