@@ -6,6 +6,8 @@ import os
 
 app = typer.Typer()
 
+
+
 #This function is responsible for putting classes and functinos into comment blocks using /**/
 def commentMaker(pointer: int, retrievedAST: str, source: str):
     #Find where the classes or functions start
@@ -114,6 +116,10 @@ def CommentOutClass(source: str  = typer.Argument(...), cls: str  = typer.Argume
     """
     This tool will comment out a class implementation from a C++ file (equivalent to deleting the class).
     """
+    validClassNamePattern = r'^[A-Za-z_]\w*$'
+    if re.match(validClassNamePattern, cls) is None:
+        print("Class name is not valid syntactically.")
+        return
     #System call to get ast dump of anything containing the string inputted in cls (cls stands for class)
     systemCall = "clang-check -ast-dump -ast-dump-filter={} test.cpp --".format(cls)
     retrieveSystemCall = os.popen(systemCall).read()
@@ -146,6 +152,11 @@ def CommentOutFunction(source: str  = typer.Argument(...), fnc: str  = typer.Arg
     """
     This tool will comment out a function implementation from a C++ file using a function prototype (equivalent to deleting the function).
     """
+    validFunctionNamePattern = r'^\s*(?:(?:\w+\s+)*\w+\s*::\s*)?(?:\w+\s+)*\w+\s*\(\s*(?:\w+\s+\w+\s*(?:,\s*\w+\s+\w+\s*)*)?\)\s*$'
+    if re.match(validFunctionNamePattern, fnc) is None:
+        print("Function name is not valid syntactically.")
+        return
+
     #fnc stands for function
     functionName = fnc.split('(')[0].split(' ')[1]
 
