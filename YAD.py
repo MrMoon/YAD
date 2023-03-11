@@ -8,9 +8,8 @@ app = typer.Typer()
 
 
 
-#This function is responsible for putting classes and functinos into comment blocks using /**/
-def commentMaker(pointer: int, retrievedAST: str, source: str):
-    #Find where the classes or functions start
+#This function is responsible for finding where classes or functions start and end (returns positions as a list)
+def positionFinder(pointer: int, retrievedAST: str):
     rowStart = int(retrievedAST[pointer])
     colStart = int(retrievedAST[pointer+1].split(',')[0])
     if retrievedAST[pointer+1].split(',')[1] == " col":
@@ -19,18 +18,27 @@ def commentMaker(pointer: int, retrievedAST: str, source: str):
     else:
         rowEnd = int(retrievedAST[pointer+2])
         colEnd = int(retrievedAST[pointer+3].split('>')[0])
+    positions = [rowStart, colStart, rowEnd, colEnd]
+    return positions
+
+
+
+#This function is responsible for putting classes and functinos into comment blocks using /**/
+def commentMaker(pointer: int, retrievedAST: str, source: str):
+    #Find where the classes or functions start
+    positions = positionFinder(pointer, retrievedAST)
 
     #Get all the code to edit it
     with open(source, 'r') as f:
         lines = f.readlines()
     
     #Comment out class
-    lines[rowStart-1] = lines[rowStart - 1][:colStart-1] + "/*" + lines[rowStart - 1][colStart-1:]
+    lines[positions[0]-1] = lines[positions[0] - 1][:positions[1]-1] + "/*" + lines[positions[0] - 1][positions[1]-1:]
 
-    if rowStart == rowEnd:
-        colEnd += 2
+    if positions[0] == positions[2]:
+        positions[3] += 2
 
-    lines[rowEnd-1] = lines[rowEnd - 1][:colEnd+1] + "*/" + lines[rowEnd - 1][colEnd+1:]
+    lines[positions[2]-1] = lines[positions[2] - 1][:positions[3]+1] + "*/" + lines[positions[2] - 1][positions[3]+1:]
     
     #Write the modified code into the file.
     with open(source, 'w') as f:
@@ -121,7 +129,7 @@ def CommentOutClass(source: str  = typer.Argument(...), cls: str  = typer.Argume
         print("Class name is not valid syntactically.")
         return
     #System call to get ast dump of anything containing the string inputted in cls (cls stands for class)
-    systemCall = "clang-check -ast-dump -ast-dump-filter={} test.cpp --".format(cls)
+    systemCall = "clang-check -ast-dump -ast-dump-filter={} {} --".format(cls, source)
     retrieveSystemCall = os.popen(systemCall).read()
     if retrieveSystemCall == "":
         print("Class not found.")
@@ -161,7 +169,7 @@ def CommentOutFunction(source: str  = typer.Argument(...), fnc: str  = typer.Arg
     functionName = fnc.split('(')[0].split(' ')[1]
 
     #System call to get ast dump of anything containing the string in funcName (funcName stands for function name)
-    systemCall = "clang-check -ast-dump -ast-dump-filter={} test.cpp --".format(functionName)
+    systemCall = "clang-check -ast-dump -ast-dump-filter={} {} --".format(functionName, source)
     retrieveSystemCall = os.popen(systemCall).read()
     if retrieveSystemCall == "":
         print("Function not found.")
@@ -181,8 +189,12 @@ def CommentOutFunction(source: str  = typer.Argument(...), fnc: str  = typer.Arg
     retrieveAll = re.findall(regex, retrieveSystemCall, re.MULTILINE)
 
     #Create the same syntax used in CLang to check if same prototype
+    #The line below finds all the parameters of the function inputted by the user
     unFilteredParameters = fnc.split('(')[1].split(',')
-    inputtedParameters = fnc.split('(')[0].split(' ')[0]+" ("
+    #The below line finds the return type of the function inputted by the user
+    functionReturnType = fnc.split('(')[0].split(' ')[0].strip()+" ("
+    #The below variable will be used to create the same syntax of a function protoype as CLang Ast Dump
+    inputtedParameters = functionReturnType
     i = 0
     for parameter in unFilteredParameters:
         inputtedParameters += parameter.strip().split(" ")[0] + ", "
