@@ -3,13 +3,69 @@ import re
 import os
 
 
-
 app = typer.Typer()
+def findLocationFunction(source: str, fnc: str, type: str ):
+    validFunctionNamePattern = r'^\s*(?:(?:\w+\s+)*\w+\s*::\s*)?(?:\w+\s+)*\w+\s*\(\s*(?:\w+\s+\w+\s*(?:,\s*\w+\s+\w+\s*)*)?\)\s*$'
+    if re.match(validFunctionNamePattern, fnc) is None:
+        print("Function name is not valid syntactically.")
+        return
 
+    #fnc stands for function
+    functionName = fnc.split('(')[0].split(' ')[1]
 
+    #System call to get ast dump of anything containing the string in funcName (funcName stands for function name)
+    systemCall = "clang-check -ast-dump -ast-dump-filter={} {} --".format(functionName, source)
+    retrieveSystemCall = os.popen(systemCall).read()
+    if retrieveSystemCall == "":
+        print("Function not found.")
+        return
+    
+    #Flag to check if function is part of class (cls = class)
+    isFunctionInClass = False
 
+    #Filter the code using regex to keep what is important (True condition of if statement means that it is only a function not a function inside a class)
+    if len(functionName.split("::")) == 1:
+        regex = r"Dumping {}:\nFunctionDecl.*?\n\|".format(functionName)
+    else:
+        regex = r"Dumping {}:\nCXXMethodDecl.*?\n".format(functionName)
+        isFunctionInClass = True
+
+    #Regex to get all of the functions that have the inputted name
+    retrieveAll = re.findall(regex, retrieveSystemCall, re.MULTILINE)
+
+    #Create the same syntax used in CLang to check if same prototype
+    #The line below finds all the parameters of the function inputted by the user
+    unFilteredParameters = fnc.split('(')[1].split(',')
+    #The below line finds the return type of the function inputted by the user
+    functionReturnType = fnc.split('(')[0].split(' ')[0].strip()+" ("
+    #The below variable will be used to create the same syntax of a function protoype as CLang Ast Dump
+    inputtedParameters = functionReturnType
+    i = 0
+    for parameter in unFilteredParameters:
+        inputtedParameters += parameter.strip().split(" ")[0] + ", "
+    inputtedParameters = inputtedParameters[:len(inputtedParameters)-2] + ")"
+
+    #For each loop commenting out the functions
+    for retrieveOne in retrieveAll:
+        findClangParameters = retrieveOne.split('\'')
+        presentParameters = findClangParameters[len(findClangParameters)-2]
+        if inputtedParameters != presentParameters:
+            continue
+        
+        retrieveOne = retrieveOne.split(':')
+
+        pointer = 3
+        if isFunctionInClass:
+            pointer = 5
+
+        if type == "commenting" :
+            commentMaker(pointer, retrieveOne, source)
+        else:
+            AST = positions(3, retrieveOne)
+            return AST
+        
 #This function is responsible for finding where classes or functions start and end (returns positions as a list)
-def positionFinder(pointer: int, retrievedAST: str):
+def positions(pointer: int, retrievedAST: str):
     rowStart = int(retrievedAST[pointer])
     colStart = int(retrievedAST[pointer+1].split(',')[0])
     if retrievedAST[pointer+1].split(',')[1] == " col":
@@ -18,27 +74,27 @@ def positionFinder(pointer: int, retrievedAST: str):
     else:
         rowEnd = int(retrievedAST[pointer+2])
         colEnd = int(retrievedAST[pointer+3].split('>')[0])
-    positions = [rowStart, colStart, rowEnd, colEnd]
-    return positions
+    position = [rowStart, colStart, rowEnd, colEnd]
+    return position
 
 
 
 #This function is responsible for putting classes and functinos into comment blocks using /**/
 def commentMaker(pointer: int, retrievedAST: str, source: str):
     #Find where the classes or functions start
-    positions = positionFinder(pointer, retrievedAST)
+    position = positions(pointer, retrievedAST)
 
     #Get all the code to edit it
     with open(source, 'r') as f:
         lines = f.readlines()
     
     #Comment out class
-    lines[positions[0]-1] = lines[positions[0] - 1][:positions[1]-1] + "/*" + lines[positions[0] - 1][positions[1]-1:]
+    lines[position[0]-1] = lines[position[0] - 1][:position[1]-1] + "/*" + lines[position[0] - 1][position[1]-1:]
 
-    if positions[0] == positions[2]:
-        positions[3] += 2
+    if position[0] == position[2]:
+        position[3] += 2
 
-    lines[positions[2]-1] = lines[positions[2] - 1][:positions[3]+1] + "*/" + lines[positions[2] - 1][positions[3]+1:]
+    lines[position[2]-1] = lines[position[2] - 1][:position[3]+1] + "*/" + lines[position[2] - 1][position[3]+1:]
     
     #Write the modified code into the file.
     with open(source, 'w') as f:
@@ -160,61 +216,41 @@ def CommentOutFunction(source: str  = typer.Argument(...), fnc: str  = typer.Arg
     """
     This tool will comment out a function implementation from a C++ file using a function prototype (equivalent to deleting the function).
     """
-    validFunctionNamePattern = r'^\s*(?:(?:\w+\s+)*\w+\s*::\s*)?(?:\w+\s+)*\w+\s*\(\s*(?:\w+\s+\w+\s*(?:,\s*\w+\s+\w+\s*)*)?\)\s*$'
-    if re.match(validFunctionNamePattern, fnc) is None:
-        print("Function name is not valid syntactically.")
-        return
+    findLocationFunction(source, fnc, "commenting")
 
-    #fnc stands for function
-    functionName = fnc.split('(')[0].split(' ')[1]
+@app.command("isolate")
+def isolate(source: str  = typer.Argument(...), destination: str = typer.Argument(...), fnc: str  = typer.Argument(...)):
+    """
+    This tool will isolate out a function 
+    """
+    AST = findLocationFunction(source, fnc, "isolate" )
+     
+    # Set the filenames of the source and destination files
 
-    #System call to get ast dump of anything containing the string in funcName (funcName stands for function name)
-    systemCall = "clang-check -ast-dump -ast-dump-filter={} {} --".format(functionName, source)
-    retrieveSystemCall = os.popen(systemCall).read()
-    if retrieveSystemCall == "":
-        print("Function not found.")
-        return
+    start_line = AST[0]
+    end_line = AST[2]
     
-    #Flag to check if function is part of class (cls = class)
-    isFunctionInClass = False
+    # Set the line number to insert the copied lines into
+    insert_line = 10
 
-    #Filter the code using regex to keep what is important (True condition of if statement means that it is only a function not a function inside a class)
-    if len(functionName.split("::")) == 1:
-        regex = r"Dumping {}:\nFunctionDecl.*?\n\|".format(functionName)
-    else:
-        regex = r"Dumping {}:\nCXXMethodDecl.*?\n".format(functionName)
-        isFunctionInClass = True
+    # Open the source file and read its contents
+    with open(source, "r") as source_file:
+        lines = source_file.readlines()
 
-    #Regex to get all of the functions that have the inputted name
-    retrieveAll = re.findall(regex, retrieveSystemCall, re.MULTILINE)
+    # Extract the lines you want to copy
+    lines_to_copy = lines[start_line - 1:end_line]
 
-    #Create the same syntax used in CLang to check if same prototype
-    #The line below finds all the parameters of the function inputted by the user
-    unFilteredParameters = fnc.split('(')[1].split(',')
-    #The below line finds the return type of the function inputted by the user
-    functionReturnType = fnc.split('(')[0].split(' ')[0].strip()+" ("
-    #The below variable will be used to create the same syntax of a function protoype as CLang Ast Dump
-    inputtedParameters = functionReturnType
-    i = 0
-    for parameter in unFilteredParameters:
-        inputtedParameters += parameter.strip().split(" ")[0] + ", "
-    inputtedParameters = inputtedParameters[:len(inputtedParameters)-2] + ")"
+    # Open the destination file and insert the copied lines at the appropriate position
+    with open(destination, "r") as destination_file:
+        lines = destination_file.readlines()
 
-    #For each loop commenting out the functions
-    for retrieveOne in retrieveAll:
-        findClangParameters = retrieveOne.split('\'')
-        presentParameters = findClangParameters[len(findClangParameters)-2]
-        if inputtedParameters != presentParameters:
-            continue
-        
-        retrieveOne = retrieveOne.split(':')
+        # Insert the copied lines at the appropriate position
+        lines = "TEsting" + lines_to_copy + "BEYE"
 
-        pointer = 3
-        if isFunctionInClass:
-            pointer = 5
-
-        commentMaker(pointer, retrieveOne, source)
-
+    # Write the modified lines to the destination file
+    with open(destination, "w") as destination_file:
+        destination_file.writelines(lines)
+    
 
 if __name__ == "__main__":
     app()

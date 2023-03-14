@@ -62,8 +62,48 @@ def findLocationFunction(source: str, fnc: str, type: str ):
         if type == "commenting" :
             commentMaker(pointer, retrieveOne, source)
         else:
-            AST = positions(3, retrieveOne)
+            AST = positions(pointer, retrieveOne)
             return AST
+
+def findLocationClass(source: str, cls: str, type: str):
+    validClassNamePattern = r'^[A-Za-z_]\w*$'
+    if re.match(validClassNamePattern, cls) is None:
+        print("Class name is not valid syntactically.")
+        return
+    #System call to get ast dump of anything containing the string inputted in cls (cls stands for class)
+    systemCall = "clang-check -ast-dump -ast-dump-filter={} {} --".format(cls, source)
+    retrieveSystemCall = os.popen(systemCall).read()
+    if retrieveSystemCall == "":
+        print("Class not found.")
+        return
+
+    #Filter the code using regex to keep what is important
+    regex = r"Dumping {}:\nCXXRecordDecl.*?\n(\|)".format(cls)
+    retrieve = re.search(regex, retrieveSystemCall).group(0)
+    if retrieve == "":
+        print("Class not found.")
+        return
+    retrieve = retrieve.split(':')
+
+    #Comment out the class
+    if type == "isolate":
+        AST = positions(3, retrieve)
+    else:
+        commentMaker(3, retrieve, source)
+    #Comment out implementations of functions outside the class
+    regex = r"Dumping {}::.*?:\nCXXMethodDecl.*?\n".format(cls)
+    retrieveAll = re.findall(regex, retrieveSystemCall, re.MULTILINE)
+
+    for retrieveOne in retrieveAll:        
+        retrieveOne = retrieveOne.split(':')
+        if type == "isolate":
+            AST += positions(5, retrieveOne)
+            return
+        else:
+            commentMaker(5, retrieveOne, source)
+    if type == "isolate":
+        return AST
+            
         
 #This function is responsible for finding where classes or functions start and end (returns positions as a list)
 def positions(pointer: int, retrievedAST: str):
@@ -75,7 +115,7 @@ def positions(pointer: int, retrievedAST: str):
     else:
         rowEnd = int(retrievedAST[pointer+2])
         colEnd = int(retrievedAST[pointer+3].split('>')[0])
-    position = [rowStart, colStart, rowEnd, colEnd]
+    position = [rowStart, colStart, rowEnd, colEnd, pointer]
     return position
 
 
@@ -181,36 +221,7 @@ def CommentOutClass(source: str  = typer.Argument(...), cls: str  = typer.Argume
     """
     This tool will comment out a class implementation from a C++ file (equivalent to deleting the class).
     """
-    validClassNamePattern = r'^[A-Za-z_]\w*$'
-    if re.match(validClassNamePattern, cls) is None:
-        print("Class name is not valid syntactically.")
-        return
-    #System call to get ast dump of anything containing the string inputted in cls (cls stands for class)
-    systemCall = "clang-check -ast-dump -ast-dump-filter={} {} --".format(cls, source)
-    retrieveSystemCall = os.popen(systemCall).read()
-    if retrieveSystemCall == "":
-        print("Class not found.")
-        return
-
-    #Filter the code using regex to keep what is important
-    regex = r"Dumping {}:\nCXXRecordDecl.*?\n(\|)".format(cls)
-    retrieve = re.search(regex, retrieveSystemCall).group(0)
-    if retrieve == "":
-        print("Class not found.")
-        return
-    retrieve = retrieve.split(':')
-
-    #Comment out the class
-    commentMaker(3, retrieve, source)
-
-    #Comment out implementations of functions outside the class
-    regex = r"Dumping {}::.*?:\nCXXMethodDecl.*?\n".format(cls)
-    retrieveAll = re.findall(regex, retrieveSystemCall, re.MULTILINE)
-
-    for retrieveOne in retrieveAll:        
-        retrieveOne = retrieveOne.split(':')
-        commentMaker(5, retrieveOne, source)
-
+    findLocationClass(source, cls, "commenting")
 
 @app.command("commentOutFunction")
 def CommentOutFunction(source: str  = typer.Argument(...), fnc: str  = typer.Argument(...)):
@@ -220,38 +231,48 @@ def CommentOutFunction(source: str  = typer.Argument(...), fnc: str  = typer.Arg
     findLocationFunction(source, fnc, "commenting")
 
 @app.command("isolate")
-def isolate(source: str  = typer.Argument(...), fnc: str  = typer.Argument(...)):
+def isolate(source: str  = typer.Argument(...), destination: str  = typer.Argument(...), prototype: str  = typer.Argument(...)):
     """
     This tool will isolate out a function 
     """
-    AST = findLocationFunction(source, fnc, "isolate" )
-     
-    # Set the filenames of the source and destination files
-    source_filename = "source.cpp"
-    destination_filename = "destination.cpp"
-
+    AST = findLocationFunction(source, prototype, "isolate" )
+    if AST == None:
+        print("Warning: Function doesn't exist in source file")
+        return 
     start_line = AST[0]
     end_line = AST[2]
+    type = AST[4]
     
-    # Set the line number to insert the copied lines into
-    insert_line = 5
-
     # Open the source file and read its contents
-    with open(source_filename, "r") as source_file:
+    with open(source, "r") as source_file:
         lines = source_file.readlines()
+        
+    if type == 5:
+        className = prototype.split('::')[0].split(' ')[1]
+        functionName = prototype.split('::')[1].split('(')[0]
+        AST = findLocationClass(destination, className,"isolate")
+        if AST == None:
+            return 
+        class_start = AST[0]
+        class_end = AST[2]
+        # start_line = AST[5]
+        # end_line = AST[7]
 
     # Extract the lines you want to copy
-    lines_to_copy = lines[start_line - 1:end_line]
+    implementation = lines[start_line - 1:end_line]
 
     # Open the destination file and insert the copied lines at the appropriate position
-    with open(destination_filename, "r") as destination_file:
+    with open(destination, "r") as destination_file:
         lines = destination_file.readlines()
-
-        # Insert the copied lines at the appropriate position
-        lines = lines[:insert_line - 1] + lines_to_copy + lines[insert_line - 1:]
+        if type == 3:
+            # Insert the copied lines at the appropriate position
+            lines = [prototype +";\n"]+ lines[0:] + ['\n'] + implementation
+        else:
+            lines = lines[0: class_end-1] + [prototype.split(className)[0] + prototype.split("::")[1] +";\n"] + lines[class_end-1:]+['\n'] + [ implementation[0].split(functionName)[0] + className+"::" + functionName + implementation[0].split(functionName)[1]] + implementation[1:]
+            
 
     # Write the modified lines to the destination file
-    with open(destination_filename, "w") as destination_file:
+    with open(destination, "w") as destination_file:
         destination_file.writelines(lines)
     
 
