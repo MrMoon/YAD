@@ -41,7 +41,7 @@ def findLocationFunction(source: str, fnc: str):
     for parameter in unFilteredParameters:
         inputtedParameters += parameter.strip().split(" ")[0] + ", "
     inputtedParameters = inputtedParameters[:len(inputtedParameters)-2] + ")"
-
+    lst = []
     #For each loop commenting out the functions
     for retrieveOne in retrieveAll:
         findClangParameters = retrieveOne.split('\'')
@@ -50,11 +50,11 @@ def findLocationFunction(source: str, fnc: str):
             continue
         
         retrieveOne = retrieveOne.split(':')
-
         pointer = 3
         if isFunctionInClass:
             pointer = 5
-        return [pointer, retrieveOne]
+        lst += [ [pointer, retrieveOne] ]
+    return lst
         
 def findLocationClass(source: str, cls: str):
     validClassNamePattern = r'^[A-Za-z_]\w*$'

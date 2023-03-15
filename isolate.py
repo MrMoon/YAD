@@ -1,5 +1,6 @@
 import typer
 import codeParser  
+import commentController 
 
 app = typer.Typer()
 
@@ -9,13 +10,14 @@ def isolateFunction(source: str  = typer.Argument(...), destination: str  = type
     This tool will isolate out a function 
     """
     findFunction = codeParser.findLocationFunction(source, prototype )
-    retrievedAST = findFunction[1]
-    pointer = findFunction[0]
-    AST = codeParser.positions(pointer, retrievedAST)
-    
-    if AST == None:
+    if findFunction == []:
         print("Warning: Function doesn't exist in source file")
         return 
+    sz = len(findFunction)
+    retrievedAST = findFunction[sz-1][1]
+    pointer = findFunction[sz-1][0]
+    AST = codeParser.positions(pointer, retrievedAST)
+    
     start_line = AST[0]
     end_line = AST[2]
     type = AST[4]
@@ -27,13 +29,12 @@ def isolateFunction(source: str  = typer.Argument(...), destination: str  = type
     if type == 5:
         className = prototype.split('::')[0].split(' ')[1]
         functionName = prototype.split('::')[1].split('(')[0]
-        AST = codeParser.findLocationClass(destination, className)
-        if AST == None:
+        retrieved = codeParser.findLocationClass(destination, className)
+        AST = codeParser.positions(3, retrieved[0])
+        if AST == []:
             return 
-        class_start = AST[0]
         class_end = AST[2]
-        # start_line = AST[5]
-        # end_line = AST[7]
+    commentController.CommentOutFunction(destination, prototype)
 
     # Extract the lines you want to copy
     implementation = lines[start_line - 1:end_line]

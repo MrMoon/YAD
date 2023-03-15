@@ -114,9 +114,12 @@ def CommentOutFunction(source: str  = typer.Argument(...), fnc: str  = typer.Arg
     This tool will comment out a function implementation from a C++ file using a function prototype (equivalent to deleting the function).
     """
     findFunction = codeParser.findLocationFunction(source, fnc)
-    retrievedAST = findFunction[1]
-    pointer = findFunction[0]
-    commentMaker(pointer, retrievedAST, source)
+    if findFunction == None:
+        return 
+    for function in findFunction:
+        retrievedAST = function[1]
+        pointer = function[0]
+        commentMaker(pointer, retrievedAST, source)
 
 
 if __name__ == "__main__":
