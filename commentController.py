@@ -1,3 +1,4 @@
+import os
 import typer
 import re
 import codeParser
@@ -13,12 +14,9 @@ def commentMaker(pointer: int, retrievedAST: str, source: str):
         lines = f.readlines()
     
     #Comment out class
-    lines[position[0]-1] = lines[position[0] - 1][:position[1]-1] + "/*" + lines[position[0] - 1][position[1]-1:]
-
-    if position[0] == position[2]:
-        position[3] += 2
-
-    lines[position[2]-1] = lines[position[2] - 1][:position[3]+1] + "*/" + lines[position[2] - 1][position[3]+1:]
+    lines[position[0]-1] = "//" + lines[position[0]-1]
+    for line in range(position[0], position[2]):
+        lines[line] = "//" + lines[line]
     
     #Write the modified code into the file.
     with open(source, 'w') as f:
@@ -100,12 +98,38 @@ def extract_header(input: str  = typer.Argument(...), output: str  = typer.Argum
 def CommentOutClass(source: str  = typer.Argument(...), cls: str  = typer.Argument(...)):
     """
     This tool will comment out a class implementation from a C++ file (equivalent to deleting the class).
-    """
+    """    
+    #Removing friendships
+    clsFix = cls.split("class ")[1].split("::")
+    clsInh = clsFix[len(clsFix)-1].strip()
+    cls = "class " + clsInh
+
+    #Accessing content of file
+    with open(source, 'r') as f:
+        sourceCode = f.read()
+
+    #Handeling inheritence
+    lstInh = []
+    regex = r"class \w+:.*\s+{}.*\n".format(clsInh)
+    retrieveAll = re.findall(regex, sourceCode, re.MULTILINE)
+    for retrieveOne in retrieveAll:
+        lstInh.append(retrieveOne.split(':')[0].strip())
+        
+    
+    # Comment out all friendships from the source file
+    sourceCode = re.sub(r'(//)?friend \s*{};\n'.format(cls), '//friend {};\n'.format(cls), sourceCode, flags=re.MULTILINE)
+
+    # Write the modified contents to the source file
+    with open(source, 'w') as f:
+        f.write(sourceCode)
+
+    #Commenting out the classes
     findClass = codeParser.findLocationClass(source, cls)
-    commentMaker(3, findClass[0], source)
-    findClass.pop(0)
-    for function in findClass:
-        commentMaker(5, function, source)
+    for entry in findClass:
+        commentMaker(entry[0], entry[1], source)
+    
+    for entry in lstInh:
+        CommentOutClass(source, entry)
 
 
 @app.command("commentOutFunction")
