@@ -1,6 +1,8 @@
 import re
 import os
 
+
+
 def findLocationFunction(source: str, fnc: str):
     validFunctionNamePattern = r'^\s*(?:(?:\w+\s+)*\w+\s*::\s*)?(?:\w+\s+)*\w+\s*\(\s*(?:\w+\s+\w+\s*(?:,\s*\w+\s+\w+\s*)*)?\)\s*$'
     if re.match(validFunctionNamePattern, fnc) is None:
@@ -55,40 +57,69 @@ def findLocationFunction(source: str, fnc: str):
             pointer = 5
         lst += [ [pointer, retrieveOne] ]
     return lst
-        
+
+
+
 def findLocationClass(source: str, cls: str):
-    validClassNamePattern = r'^[A-Za-z_]\w*$'
+    #Checking if user input is correct and matches class prototype
+    cls.strip()
+    validClassNamePattern = r'^class [a-zA-Z_][a-zA-Z0-9_]*(\s*::\s*[a-zA-Z_][a-zA-Z0-9_]*)*$'
     if re.match(validClassNamePattern, cls) is None:
         print("Class name is not valid syntactically.")
         return
+    
+    cls = cls[5:]
+    clsFix = cls.split("::")
+    cls = ""
+    for clsPart in clsFix:
+        cls += clsPart.strip() + "::"
+    cls=cls[:len(cls)-2]
+
     #System call to get ast dump of anything containing the string inputted in cls (cls stands for class)
-    systemCall = "clang-check -ast-dump -ast-dump-filter={} {} --".format(cls, source)
+    systemCall = "clang-check -ast-dump -ast-dump-filter={} {} -- 2>&1".format(cls, source)
     retrieveSystemCall = os.popen(systemCall).read()
     if retrieveSystemCall == "":
         print("Class not found.")
         return
 
     #Filter the code using regex to keep what is important
-    regex = r"Dumping {}:\nCXXRecordDecl.*?\n(\|)".format(cls)
-    retrieve = re.search(regex, retrieveSystemCall).group(0)
-    if retrieve == "":
-        print("Class not found.")
-        return
-    retrieve = retrieve.split(':')
-    
-    #Saves informtion about the class
-    lst = []
-    lst += [retrieve]
+    regex = r"Dumping {}:\nCXXRecordDecl.*?\n".format(cls)
+    retrieveAll = re.findall(regex, retrieveSystemCall, re.MULTILINE)
+
+    clsList = []
+
+    for retrieveOne in retrieveAll:
+        checkDump = retrieveOne.split("CXXRecordDecl")
+        if checkDump[0] != ("Dumping " + cls + ":\n"):
+            continue
+        
+        checkDump = checkDump[1].split(':')
+
+        clsList += [ [2, checkDump] ]    
 
     #Saves informtion about the implementations of functions outside the class
     regex = r"Dumping {}::.*?:\nCXXMethodDecl.*?\n".format(cls)
     retrieveAll = re.findall(regex, retrieveSystemCall, re.MULTILINE)
     for retrieveOne in retrieveAll:        
-        retrieveOne = retrieveOne.split(':')
-        lst += [retrieveOne]
+        checkDump = retrieveOne.split("CXXMethodDecl")[1].split(':')
+        clsList += [ [2, checkDump] ]
         
+    #Saves informtion about the constructor and copy constructors outside the class
+    regex = r"Dumping {}::.*?:\nCXXConstructorDecl.*?\n".format(cls)
+    retrieveAll = re.findall(regex, retrieveSystemCall, re.MULTILINE)
+    for retrieveOne in retrieveAll:        
+        checkDump = retrieveOne.split("CXXConstructorDecl")[1].split(':')
+        clsList += [ [2, checkDump] ]
+
+    #Saves informtion about the destructors outside the class
+    regex = r"Dumping {}::.*?:\nCXXDestructorDecl.*?\n".format(cls)
+    retrieveAll = re.findall(regex, retrieveSystemCall, re.MULTILINE)
+    for retrieveOne in retrieveAll:        
+        checkDump = retrieveOne.split("CXXDestructorDecl")[1].split(':')
+        clsList += [ [2, checkDump] ]
+
     #Returuns informtion
-    return lst 
+    return clsList 
 
 #This function is responsible for finding where classes or functions start and end (returns positions as a list)   
 def positions(pointer: int, retrievedAST: str):
