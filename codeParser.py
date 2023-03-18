@@ -39,17 +39,17 @@ def findLocationFunction(source: str, fnc: str):
         if isFunctionTemplate:
             regex = r"Dumping {}:\nFunctionTemplateDecl.*?\n.*?\n.*?FunctionDecl.*?\n".format(functionName)
         else:
-            regex = r"^Dumping {}:\nFunctionDecl.*\n+".format(functionName)
+            regex = r"Dumping {}:\nFunctionDecl.*?\n".format(functionName)
     else:
         if isFunctionTemplate:
             regex = r"Dumping {}:\nFunctionTemplateDecl.*?\n.*?\n.*?CXXMethodDecl.*?\n".format(functionName)
         else:
-            regex = r"Dumping {}:\nCXXMethodDecl.*?".format(functionName)
+            regex = r"Dumping {}:\nCXXMethodDecl.*?\n".format(functionName)
         isFunctionInClass = True
 
     #Regex to get all of the functions that have the inputted name
     retrieveAll = re.findall(regex, retrieveSystemCall, re.MULTILINE)
-    print(retrieveAll)
+
     #Create the same syntax used in CLang to check if same prototype by making a new file with the function prototype to run CLang on it
     f = open("temp" + source, "w")
     #if isFunctionTemplate and isFunctionInClass:
@@ -62,7 +62,7 @@ def findLocationFunction(source: str, fnc: str):
     f.close()
     systemCall = "clang-check -ast-dump -ast-dump-filter={} {} -- 2>&1".format(functionName, "temp" + source)
     retrieveNewCall = os.popen(systemCall).read()
-    #os.remove("temp" + source)
+    os.remove("temp" + source)
     if isFunctionTemplate:
         if isFunctionInClass:
             regexNew = r"Dumping {}:\nFunctionTemplateDecl.*?\n.*?\n.*?CXXMethodDecl.*?\n".format(functionName)
@@ -80,6 +80,7 @@ def findLocationFunction(source: str, fnc: str):
     lst =[]
     for retrieveOne in retrieveAll:
         presentParameters = retrieveOne.split('\'')
+        
         if inputtedParameters[len(inputtedParameters)-2] != presentParameters[len(presentParameters)-2]:
             continue
         
