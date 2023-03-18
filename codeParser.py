@@ -19,7 +19,7 @@ def findLocationFunction(source: str, fnc: str):
     systemCall = "clang-check -ast-dump -ast-dump-filter={} {} -- 2>&1".format(functionName, source)
     retrieveSystemCall = os.popen(systemCall).read()
     if retrieveSystemCall == "":
-        print("Function not found in " + source)
+        print("Function not found.")
         return
     
     #Flag to check if function is part of class (cls = class)
@@ -135,11 +135,14 @@ def findLocationClass(source: str, cls: str):
         clsList += [ [2, checkDump] ]    
 
     #Saves informtion about the implementations of functions outside the class
-    regex = r"Dumping {}::.*?:\nCXXMethodDecl.*?\n".format(cls)
+    regex = r"Dumping {}::.*?\nCXXMethodDecl.*?\n".format(cls)
     retrieveAll = re.findall(regex, retrieveSystemCall, re.MULTILINE)
-    for retrieveOne in retrieveAll:        
-        checkDump = retrieveOne.split("CXXMethodDecl")[1].split(':')
-        clsList += [ [2, checkDump] ]
+    for retrieveOne in retrieveAll:
+        if "warning generated" in retrieveOne:
+            print("warning error from clang (code written incorrectly)")
+        else:
+            checkDump = retrieveOne.split("CXXMethodDecl")[1].split(':')
+            clsList += [ [2, checkDump] ]
 
     #Saves information about the implementation of template functions outside the class
     regex = r"Dumping {}::.*?:[\s\S]*CXXMethodDecl.*?\n".format(cls)
