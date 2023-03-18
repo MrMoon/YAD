@@ -5,18 +5,27 @@ import codeParser
 app = typer.Typer()
 
 #This function is responsible for putting classes and functinos into comment blocks using /**/
-def commentMaker(pointer: int, retrievedAST: str, source: str):
+def commentMaker(pointer: int, retrievedAST: str, source: str, isTemplate: bool):
     #Find where the classes or functions start
-    position = codeParser.positions(pointer, retrievedAST)
-
+    position = codeParser.positions(pointer, retrievedAST, isTemplate)
     #Get all the code to edit it
     with open(source, 'r') as f:
         lines = f.readlines()
     
+    if isTemplate:
+        flag = lines[position[0] - 1].count('{') - lines[position[0] - 1].count('}')
+        lines[position[0] - 1] = "//" + lines[position[0] - 1]
+        count = 0
+        while flag > 0:
+            lines[position[0]+count] = "//" + lines[position[0]+count]
+            flag += lines[position[0]+count].count('{')
+            flag -= lines[position[0]+count].count('}')
+            count += 1
     #Comment out class
-    lines[position[0]-1] = "//" + lines[position[0]-1]
-    for line in range(position[0], position[2]):
-        lines[line] = "//" + lines[line]
+    else:
+        lines[position[0]-1] = "//" + lines[position[0]-1]
+        for line in range(position[0], position[2]):
+            lines[line] = "//" + lines[line]
     
     #Write the modified code into the file.
     with open(source, 'w') as f:
@@ -126,7 +135,10 @@ def CommentOutClass(source: str  = typer.Argument(...), cls: str  = typer.Argume
     #Commenting out the classes
     findClass = codeParser.findLocationClass(source, cls)
     for entry in findClass:
-        commentMaker(entry[0], entry[1], source)
+        if len(entry) == 2:
+            commentMaker(entry[0], entry[1], source, False)
+        else:
+            commentMaker(entry[0], entry[1], source, entry[2])
     
     for entry in lstInh:
         CommentOutClass(source, entry)
@@ -137,13 +149,29 @@ def CommentOutFunction(source: str  = typer.Argument(...), fnc: str  = typer.Arg
     """
     This tool will comment out a function implementation from a C++ file using a function prototype (equivalent to deleting the function).
     """
+    #Removing friendships
+    fncFix = fnc.strip().split("const")[-1].strip().split("static")[-1].strip()
+    fncFix = fncFix.replace("*", "\*")
+    fncTemplate = ""
+    if fncFix[:8] == "template":
+        fncFix = fnc.split('>')[1].strip()
+        fncTemplate = fnc.split('>')[0].strip() + '>'
+    
+    with open(source, 'r') as f:
+        sourceCode = f.read()
+    if fncFix[:8] == "template":
+        sourceCode = re.sub(r'(//)?{}\s*\n?(//)?friend \s*{};\n'.format(fncTemplate, fncFix), "//{} friend {}".format(fncTemplate, fncFix),sourceCode, flags=re.MULTILINE)
+    else:
+        sourceCode = re.sub(r'(//)?friend \s*{};\n'.format(fncFix), "//friend {}".format(fncFix),sourceCode, flags=re.MULTILINE)
+
+    with open(source, 'w') as f:
+        f.write(sourceCode)
+
     findFunction = codeParser.findLocationFunction(source, fnc)
     if findFunction == None:
         return 
     for function in findFunction:
-        retrievedAST = function[1]
-        pointer = function[0]
-        commentMaker(pointer, retrievedAST, source)
+        commentMaker(function[0], function[1], source, function[2])
 
 
 if __name__ == "__main__":
