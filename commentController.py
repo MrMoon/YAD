@@ -119,7 +119,7 @@ def CommentOutClass(source: str  = typer.Argument(...), cls: str  = typer.Argume
 
     #Handeling inheritence
     lstInh = []
-    regex = r"class \w+:.*\s+{}.*\n".format(clsInh)
+    regex = r"class \w+\s*:.*\s+{}.*\n".format(clsInh)
     retrieveAll = re.findall(regex, sourceCode, re.MULTILINE)
     for retrieveOne in retrieveAll:
         lstInh.append(retrieveOne.split(':')[0].strip())
