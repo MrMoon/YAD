@@ -141,12 +141,14 @@ def findLocationClass(source: str, cls: str):
         checkDump = retrieveOne.split("CXXMethodDecl")[1].split(':')
         clsList += [ [2, checkDump] ]
 
-    #Template
+    #Saves information about the implementation of template functions outside the class
     regex = r"Dumping {}::.*?:[\s\S]*CXXMethodDecl.*?\n".format(cls)
     retrieveAll = re.findall(regex, retrieveSystemCall, re.MULTILINE)
     for retrieveOne in retrieveAll:        
-        checkDump = retrieveOne.split("FunctionTemplateDecl")[1].split(':')
-        clsList += [ [2, checkDump, True] ]
+        checkDump = retrieveOne.split("FunctionTemplateDecl")
+        if len(checkDump) != 1:
+            checkDump = checkDump[1].split(':')
+            clsList += [ [2, checkDump, True] ]
         
     #Saves informtion about the constructor and copy constructors outside the class
     regex = r"Dumping {}::.*?:\nCXXConstructorDecl.*?\n".format(cls)
