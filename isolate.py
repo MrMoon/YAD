@@ -14,14 +14,21 @@ def isolateFunction(source: str  = typer.Argument(...), destination: str  = type
         print("Warning: Function doesn't exist in " + source +" file")
         return 
     sz = len(findFunction)
-    retrievedAST = findFunction[sz-1][1]
-    pointer = findFunction[sz-1][0]
+    mx =0
+    for func in findFunction:
+        if len(func[1]) > mx:
+            mx = len(func[1])
+            imp = func
+            
+    retrievedAST = imp[1]
+    pointer = imp[0]
     AST = codeParser.positions(pointer, retrievedAST, False)
     
     start_line = AST[0]
     end_line = AST[2]
     classFunc = prototype.split("::")
     type = len(classFunc)
+    
     # Open the source file and read its contents
     with open(source, "r") as source_file:
         lines = source_file.readlines() 
@@ -78,7 +85,9 @@ def isolateClass(source: str  = typer.Argument(...), destination: str  = typer.A
         start_line = AST[0]
         end_line = AST[2]
         implementation += lines[start_line - 1:end_line]        
-        
+
+    commentController.CommentOutClass(destination, prototype)
+    
     with open(destination, "r") as destination_file:
         lines = destination_file.readlines()
         # Insert the copied lines at the appropriate position
