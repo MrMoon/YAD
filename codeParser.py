@@ -19,7 +19,7 @@ def findLocationFunction(source: str, fnc: str):
     systemCall = "clang-check -ast-dump -ast-dump-filter={} {} -- 2>&1".format(functionName, source)
     retrieveSystemCall = os.popen(systemCall).read()
     if retrieveSystemCall == "":
-        print("Function not found.")
+        print("Function not found in "+ source)
         return
     
     #Flag to check if function is part of class (cls = class)
@@ -116,7 +116,7 @@ def findLocationClass(source: str, cls: str):
     systemCall = "clang-check -ast-dump -ast-dump-filter={} {} -- 2>&1".format(cls, source)
     retrieveSystemCall = os.popen(systemCall).read()
     if retrieveSystemCall == "":
-        print("Class not found.")
+        print("Class not found in " + source)
         return
 
     #Filter the code using regex to keep what is important
