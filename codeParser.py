@@ -3,61 +3,98 @@ import os
 import orjson, json
 import clang.cindex 
 
-def findLocationFunction(data, prototype: str):
-
-    isTemplate = 0
+def findLocationFunction(data, prototype: str, source, type = ""):
+    #prepare info for template functions
     if len(prototype.split("template"))> 1 :
-        isTemplate=1
+        if len(prototype.split("::")) > 1 or type == "member_function":
+            type = "template_member_function"
+        else:
+            type = "template_function"
         prototype = prototype.split(">")
         prototype[0] = prototype[0] + ">"
         regex =  re.split('template\\s*<\\s*typename\\s*([a-zA-Z])\\s*>\\s*',prototype[0])
         returntype = regex[1]
         prototype  = prototype[1]
         params = prototype
-        prototype = prototype.split(returntype)[1]
-
-    name=re.split('\s+|\(', prototype)[1]
-    if isTemplate == 0:
+        prototype = prototype.split(returntype, 1)[1]
+        if type == "template_function":
+            name=re.split('\s+|\(', prototype)[1].strip()
+    elif type != "member_function" and len(prototype.split("::")) == 1:
+        type="function"
+    else:
+        type = "member_function"
+    
+    if type == "member_function" or type == "template_member_function":
+        parent_class = prototype.split("::")[0].split(" ")[-1]
+        if type == "member_function":
+            returntype = prototype.split(parent_class)[0]
+        prototype=prototype.replace(" ", "")
+        print(prototype)
+        if len(prototype.split("::")) == 1:
+            return
+        name = prototype.split("::")[1].split("(")[0]
+    else:
+        name=re.split('\s+|\(', prototype)[1].strip()
+    
+    if type == "function":
         returntype = prototype.split(name)[0].strip()
-        
-    if isTemplate == 1:
-        prototype = params
-        
-    params = prototype.split(name)[1].strip()
-    qualType = returntype + params
-    qualType = qualType.replace(" ", "")
-    pos = []
-    type = ""
-    if isTemplate == 0:
+  
+    params = prototype.split(name)[1]
+    qualtype = returntype + params
+    qualtype = qualtype.replace(" ", "")
+    pos=[]
+    print( name)
+    print(returntype)
+    print(qualtype)
+    if type == "function":
         for item in data['nodes']:
-            if item['kind'] == "FUNCTION_DECL":
-                type  = "function"
-            if item['kind'] == "CXX_METHOD":
-                type = "member_function_outside"
-            if type != "" and item['spelling'].strip() == name.strip() and returntype.strip() == item['prototype'].split("(")[0].strip() and params == "(" + item['prototype'].split("(")[1]:
+            if item['kind'] == "FUNCTION_DECL" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype:
                 end = item['end']
                 start = item['start']
-                pos += [start, end, "function"]
-    else:
-            flag=0
-            for item in data['nodes']:
-                #not the best way!!
-                if flag == 1 and item['kind'] == "FUNCTION_TEMPLATE" or  item['kind'] == "FUNCTION_DECL" or item['kind'] == "STRUCT_DECL" or item['kind'] == "CLASS_DECL":
-                    end = item['start']-1 
-                    pos+=[end]
-                    break
-                #strip is not enough, find better solution
-                if item['kind'] == "FUNCTION_TEMPLATE" and item['spelling'].strip() == name.strip() and returntype.strip() == item['prototype'].split("(")[0].strip() and params.strip() == "(" + item['prototype'].split("(")[1].strip():
-                    start = item['start']
-                    flag=1
-                    pos += [start]
-            #fix this
-            if flag == 0:
-                pos+=[10000]
+                pos += [start, end, type]
+      
+    if type == "member_function":
+        for item in data['nodes']:
+            if item['kind'] == "CXX_METHOD" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype:
+                end = item['end']
+                start = item['start']
+                pos += [start, end, type]
                 
+    if type == "template_function" or type == "template_member_function":
+        for item in data['nodes']:
+            if item['kind'] == "FUNCTION_TEMPLATE" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype:
+                    start = item['start']
+                    end =-1
+                    with open(source, "r") as source_file:
+                        lines = source_file.readlines()
+                        
+                    #check for forward declaration 
+                    openb =0
+                    for char in lines[start-1]:
+                        if char == '{':
+                            openb = openb+1
+                    if openb == 0:
+                        pos += [start, start, type]
+                        continue
+                    #find when the function ends 
+                    i = start 
+                    while(True):
+                        for char in lines[i]:
+                            if char == '{':
+                                openb = openb+1
+                            if char == '}':
+                                openb = openb -1
+                                if openb == 0:
+                                    end = i+1
+                                    break
+                        i = i+1
+                        if end != -1:
+                            break
+                    pos += [start, end, type]
+        
     return pos
 
-def findLocationClass(data, prototype: str, iter: int):
+def findLocationClass(data, prototype: str, iter: int, source):
     name = prototype.split(" ")[1]
     pos=[]
     stc = -1
@@ -73,8 +110,6 @@ def findLocationClass(data, prototype: str, iter: int):
                 pos+=[start, end, "class"]
     
         #check member functions implemented outside the class
-        #need to add template  
-        #where to put this?
         if item['start'] < stc or item['end'] > enc:
             if item['mangled_name'].startswith('?'):
                 mangledName= item['mangled_name'].split("@")
@@ -82,17 +117,16 @@ def findLocationClass(data, prototype: str, iter: int):
                     if item['kind'] == "CXX_METHOD":
                         returnType = item['prototype'].split(" ")[0]
                         prototype = returnType +" " +item['displayname']
-                        pos += findLocationFunction(data, prototype)
-                    # start = item['start']
-                    # end = item['end']
-                    # pos+=[start, end, "member_function_outside"]
-                    
+                        if len(prototype.split("::")) > 1:
+                            pos+= findLocationFunction(data, prototype, source, "member_function")
+        
+        #find start and end positions of all classes that inherits from this class       
         for inherit in item['inherits_from']:
             if inherit == name:
                 start = item['start']
                 end = item['end']
                 pos+=[start, end, "inheritance"]
-                pos += findLocationClass(data, "class "+  item['spelling'], iter+1)
+                pos += findLocationClass(data, "class "+  item['spelling'], iter+1, source)
                         
         #find start and end positions of all classes with friendship with this class
         for friend in item['friend_with']:
@@ -100,7 +134,7 @@ def findLocationClass(data, prototype: str, iter: int):
                 start = item['start']
                 end = item['end']
                 pos+=[start, end, "friendship"]
-                pos += findLocationClass(data,  "class " + item['spelling'], iter+1)
+                pos += findLocationClass(data,  "class " + item['spelling'], iter+1, source)
     return pos
 
         
@@ -170,10 +204,10 @@ def positions ( source: str, type: str, prototype: str):
     pos =[]
     
     if type == "class" or type == "struct":
-        pos = findLocationClass(data, prototype,0 )  
+        pos = findLocationClass(data, prototype,0 , source)  
         
     if type == "function":
-        pos = findLocationFunction( data, prototype)  
+        pos = findLocationFunction( data, prototype, source)  
         
     return pos
                     
