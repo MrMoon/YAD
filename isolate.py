@@ -19,26 +19,23 @@ def isolateFunction(source: str  = typer.Argument(...), destination: str  = type
     # Open the source file and read its contents
     with open(source, "r") as source_file:
         lines = source_file.readlines() 
-         
-    #commenting out the function in destination file 
-    newCommenter.CommentOutFunction(destination, prototype)
     
     #check if its a member function and parent class exists in destination file 
     if findFunction[2] == "member_function" or findFunction[2] == "template_member_function":
-        print(prototype)
-        if len(prototype.split("::")) == 1:
-            return
-        parent_class = prototype.split("::")[0].split(" ")[-1]
-        print(parent_class)
+        parent_class = prototype.split("::")[0].strip().split(" ")[-1]
         findClass = codeParser.positions(destination, "class", "class " + parent_class)
         if findClass == []:
             print("Warning: Parent Class doesn't exist in " +destination +" file")
             return 
         class_end = findClass[1]
         #fixing protoype
-        prototype = prototype.split(parent_class)[0] + prototype.split(parent_class)[1]
-        prototype = prototype.split("::")[0] + prototype.split("::")[1]
-        
+        print(prototype)
+        forward_implementation = prototype.split(parent_class)[0] + prototype.split(parent_class)[1]
+        forward_implementation = forward_implementation.split("::")[0] + forward_implementation.split("::")[1]
+        print(prototype)
+    
+    #commenting out the function in destination file 
+    newCommenter.CommentOutFunction(destination, prototype)
     
     #incase of forward declaration or memebr functions implemented outside a class
     i=0
@@ -60,7 +57,7 @@ def isolateFunction(source: str  = typer.Argument(...), destination: str  = type
     if findFunction[2] == "member_function" or findFunction[2] == "template_member_function":
         #if function implemented outside the class 
         if  i == 3:
-            lines = lines[0: class_end-1] + [prototype + ";\n"] + lines[class_end-1: ] + implementation 
+            lines = lines[0: class_end-1] + [forward_implementation + ";\n"] + lines[class_end-1: ] +['\n']+ implementation 
         #if function implemented inside the class
         else:
             lines = lines[0: class_end-1] + implementation + ["\n"] + lines[class_end-1: ]
@@ -82,20 +79,31 @@ def isolateClass(source: str  = typer.Argument(...), destination: str  = typer.A
         lines = source_file.readlines()
         
     n = len(position)
-    implementation = []
-    class_to_insert = []
     things = []
-    for i in range(0, int(n), 3):
-        start_line = position[i]
-        end_line = position[i+1]
-        things += lines[start_line - 1:end_line]
-            
+    # things += lines[class_start-1: class_end]
+    for i in range(0, int(n), 3): 
+        if position[i+2] == "class":
+            class_start = position[i]
+            class_end = position[i+1]
+            start_line= class_start
+            end_line = class_end
+        else:
+            start_line = position[i]
+            end_line = position[i+1]
+        if start_line <= class_start or end_line >= class_end:
+            things += lines[start_line - 1:end_line]
+    
+    
+    class_position = codeParser.positions(destination, "class", prototype, 1)
     newCommenter.CommentOutClass(destination, prototype)
     
     beginning = 0 #codeParser.positions(destination, "start", "")
     with open(destination, "r") as destination_file:
         lines = destination_file.readlines()
-        lines =  lines[0: beginning-1]  + class_to_insert + lines[beginning-1: ]+ ["\n"] + implementation + ["\n"] + things
+        if class_position == []:
+            lines =  lines +  ["\n"]  + things
+        else:
+            lines =  lines[0: class_position[0]-1] + things +  ["\n"] + lines[class_position[0]-1: ]
     with open(destination, "w") as destination_file:
         destination_file.writelines(lines)
 

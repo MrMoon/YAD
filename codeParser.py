@@ -3,71 +3,54 @@ import os
 import orjson, json
 import clang.cindex 
 
-def findLocationFunction(data, prototype: str, source, type = ""):
-    #prepare info for template functions
+def findLocationFunction(data, prototype: str, source):
+    #label function by its type 
     if len(prototype.split("template"))> 1 :
-        if len(prototype.split("::")) > 1 or type == "member_function":
+        if len(prototype.split("::")) > 1 :
             type = "template_member_function"
         else:
             type = "template_function"
-        prototype = prototype.split(">")
-        prototype[0] = prototype[0] + ">"
-        regex =  re.split('template\\s*<\\s*typename\\s*([a-zA-Z])\\s*>\\s*',prototype[0])
-        returntype = regex[1]
-        prototype  = prototype[1]
-        params = prototype
-        prototype = prototype.split(returntype, 1)[1]
-        if type == "template_function":
-            name=re.split('\s+|\(', prototype)[1].strip()
-    elif type != "member_function" and len(prototype.split("::")) == 1:
-        type="function"
-    else:
+    elif len(prototype.split("::")) > 1:
         type = "member_function"
+    else:
+        type="function"
     
+    #extract information from function prototype
     if type == "member_function" or type == "template_member_function":
-        parent_class = prototype.split("::")[0].split(" ")[-1]
-        if type == "member_function":
-            returntype = prototype.split(parent_class)[0]
+        parent_class = prototype.split("::")[0].strip().split(" ")[-1]
+        returntype = prototype.split(parent_class)[0].strip().split(" ")[-1]
         prototype=prototype.replace(" ", "")
-        print(prototype)
-        if len(prototype.split("::")) == 1:
-            return
         name = prototype.split("::")[1].split("(")[0]
     else:
-        name=re.split('\s+|\(', prototype)[1].strip()
-    
-    if type == "function":
+        if type == "template_function":
+            prototype = prototype.split(">")[1].strip()
+        name = prototype.split('(')[0].split(" ")[-1].strip()
         returntype = prototype.split(name)[0].strip()
-  
     params = prototype.split(name)[1]
     qualtype = returntype + params
     qualtype = qualtype.replace(" ", "")
+    
+    #retrieve position of function
     pos=[]
-    print( name)
-    print(returntype)
-    print(qualtype)
     if type == "function":
         for item in data['nodes']:
             if item['kind'] == "FUNCTION_DECL" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype:
                 end = item['end']
                 start = item['start']
                 pos += [start, end, type]
-      
     if type == "member_function":
         for item in data['nodes']:
             if item['kind'] == "CXX_METHOD" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype:
                 end = item['end']
                 start = item['start']
-                pos += [start, end, type]
-                
+                pos += [start, end, type]          
     if type == "template_function" or type == "template_member_function":
         for item in data['nodes']:
             if item['kind'] == "FUNCTION_TEMPLATE" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype:
                     start = item['start']
                     end =-1
                     with open(source, "r") as source_file:
-                        lines = source_file.readlines()
-                        
+                        lines = source_file.readlines()    
                     #check for forward declaration 
                     openb =0
                     for char in lines[start-1]:
@@ -90,51 +73,72 @@ def findLocationFunction(data, prototype: str, source, type = ""):
                         i = i+1
                         if end != -1:
                             break
-                    pos += [start, end, type]
-        
+                    pos += [start, end, type] 
     return pos
 
-def findLocationClass(data, prototype: str, iter: int, source):
-    name = prototype.split(" ")[1]
+def findLocationClass(data, prototype: str, source, type: str, iteration = 0):
+    #classes list stores all classes that inherits from\friend with main class in order to parse their member functions and nested classes   
+    classes =  [prototype]
     pos=[]
-    stc = -1
-    enc = -1
-    for item in data['nodes']:
-        #find start and end positions of a class given its name
-        if item['spelling'] == name and item['is_class'] == True:
-            start = item['start']
-            end = item['end']
-            stc = start 
-            enc = end
-            if iter == 0:
-                pos+=[start, end, "class"]
-    
-        #check member functions implemented outside the class
-        if item['start'] < stc or item['end'] > enc:
-            if item['mangled_name'].startswith('?'):
-                mangledName= item['mangled_name'].split("@")
-                if len(mangledName) >= 1 and mangledName[1] == name:
-                    if item['kind'] == "CXX_METHOD":
+    for class_i in classes:
+        name = class_i.split(" ")[1]
+        class_start = -1
+        class_end = -1
+        flag=0
+        i=0 
+        while i < len(data['nodes']):
+            item = data['nodes'][i]
+            #find start and end positions of a class given its name
+            if item['spelling'] == name:
+                if ((item['is_class'] == True and type == "class") or (item['is_struct'] == True and type == "struct")):
+                    start = item['start']
+                    end = item['end']
+                    class_start = start 
+                    class_end = end
+                    if iteration == 1:
+                        pos = [start, end, type]
+                        return pos
+                    pos+=[start, end, type]
+                    flag =1
+            if flag  == 0 : 
+                i = i+1
+                continue
+            #check member functions implemented outside the class
+            if item['start'] < class_start or item['end'] > class_end:
+                if item['mangled_name'].startswith('?'):
+                    mangledName= item['mangled_name'].split("@")
+                    if len(mangledName) > 1 and mangledName[1] == name:
+                        if item['kind'] == "CXX_METHOD":
+                            returnType = item['prototype'].split(" ")[0]
+                            func_prototype = returnType +" " + name + "::" +item['displayname']
+                            pos+= findLocationFunction(data, func_prototype, source)
+            #check template member functions  
+            if item["kind"] == "FUNCTION_TEMPLATE":
+                start_line = item['start']
+                j = i+1
+                template_node = data['nodes'][j]
+                while template_node['start'] == start_line:
+                    if template_node['kind'] == "TEMPLATE_TYPE_PARAMETER":
+                        template = template_node['spelling']
+                    if template_node['kind'] == "TYPE_REF" and template_node['spelling'] == prototype:
                         returnType = item['prototype'].split(" ")[0]
-                        prototype = returnType +" " +item['displayname']
-                        if len(prototype.split("::")) > 1:
-                            pos+= findLocationFunction(data, prototype, source, "member_function")
-        
-        #find start and end positions of all classes that inherits from this class       
-        for inherit in item['inherits_from']:
-            if inherit == name:
-                start = item['start']
-                end = item['end']
-                pos+=[start, end, "inheritance"]
-                pos += findLocationClass(data, "class "+  item['spelling'], iter+1, source)
-                        
-        #find start and end positions of all classes with friendship with this class
-        for friend in item['friend_with']:
-            if friend == prototype:
-                start = item['start']
-                end = item['end']
-                pos+=[start, end, "friendship"]
-                pos += findLocationClass(data,  "class " + item['spelling'], iter+1, source)
+                        func_prototype = "template <typename " + template + "> " + returnType +" " + name + " :: " +item['displayname']
+                        pos += findLocationFunction(data, func_prototype, source)
+                    j += 1
+                    template_node = data['nodes'][j]     
+            #find start and end positions of all classes that inherits from this class       
+            for inherit in item['inherits_from']:
+                if inherit == name:
+                    start = item['start']
+                    end = item['end']
+                    classes += [type + " "+  item['spelling']]            
+            #find start and end positions of all classes with friendship with this class
+            for friend in item['friend_with']:
+                if friend == class_i:
+                    start = item['start']
+                    end = item['end']
+                    classes +=  [type + " "+  item['spelling']]
+            i = i+1
     return pos
 
         
@@ -198,13 +202,13 @@ def prepareData ( source: str):
         data = orjson.loads(f.read())
     return data
 
-def positions ( source: str, type: str, prototype: str):
+def positions ( source: str, type: str, prototype: str , type1=0):
     
     data = prepareData(source)
     pos =[]
     
-    if type == "class" or type == "struct":
-        pos = findLocationClass(data, prototype,0 , source)  
+    if type == "class": # or type == "struct":
+        pos = findLocationClass(data, prototype , source, type, type1)  
         
     if type == "function":
         pos = findLocationFunction( data, prototype, source)  
