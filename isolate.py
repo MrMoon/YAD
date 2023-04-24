@@ -1,8 +1,7 @@
 import typer
 import codeParser  
 import newCommenter
-import json
-import clang.cindex
+import os
 
 app = typer.Typer()
 
@@ -11,6 +10,7 @@ def isolateFunction(source: str  = typer.Argument(...), destination: str  = type
     """
     This tool will isolate out a function 
     """
+    
     findFunction = codeParser.positions(source,"function", prototype)
     if findFunction == None or findFunction == []:
         print("Warning: Function doesn't exist in " + source +" file")
@@ -21,7 +21,7 @@ def isolateFunction(source: str  = typer.Argument(...), destination: str  = type
         lines = source_file.readlines() 
     
     #check if its a member function and parent class exists in destination file 
-    if findFunction[2] == "member_function" or findFunction[2] == "template_member_function":
+    if findFunction[2] != "function" and findFunction[2] != "template_function":
         parent_class = prototype.split("::")[0].strip().split(" ")[-1]
         findClass = codeParser.positions(destination, "class", "class " + parent_class)
         if findClass == []:
@@ -29,15 +29,13 @@ def isolateFunction(source: str  = typer.Argument(...), destination: str  = type
             return 
         class_end = findClass[1]
         #fixing protoype
-        print(prototype)
         forward_implementation = prototype.split(parent_class)[0] + prototype.split(parent_class)[1]
         forward_implementation = forward_implementation.split("::")[0] + forward_implementation.split("::")[1]
-        print(prototype)
     
     #commenting out the function in destination file 
     newCommenter.CommentOutFunction(destination, prototype)
     
-    #incase of forward declaration or memebr functions implemented outside a class
+    #case: forward declaration or memebr functions implemented outside a class
     i=0
     if len(findFunction) > 3:
         i=3
@@ -50,11 +48,11 @@ def isolateFunction(source: str  = typer.Argument(...), destination: str  = type
     # Open the destination file and insert the copied lines at the appropriate position
     with open(destination, "r") as destination_file:
         lines = destination_file.readlines()
-        
+    #functions insertion
     if findFunction[2] == "function" or findFunction[2] == "template_function":
         lines = [prototype +";\n"]+ lines[0:] + ['\n'] + implementation  
-        
-    if findFunction[2] == "member_function" or findFunction[2] == "template_member_function":
+    #member functions insertion 
+    else:
         #if function implemented outside the class 
         if  i == 3:
             lines = lines[0: class_end-1] + [forward_implementation + ";\n"] + lines[class_end-1: ] +['\n']+ implementation 
@@ -68,9 +66,7 @@ def isolateFunction(source: str  = typer.Argument(...), destination: str  = type
 
 @app.command("isolateClass")
 def isolateClass(source: str  = typer.Argument(...), destination: str  = typer.Argument(...), prototype: str  = typer.Argument(...)):
-    
     position = codeParser.positions(source, "class", prototype)
-    print(position)
     if position == []:
         print("Class not found in " + source)
         return

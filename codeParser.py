@@ -21,15 +21,24 @@ def findLocationFunction(data, prototype: str, source):
         returntype = prototype.split(parent_class)[0].strip().split(" ")[-1]
         prototype=prototype.replace(" ", "")
         name = prototype.split("::")[1].split("(")[0]
+        if len(name.split("~")) > 1 and name.split("~")[1] == parent_class:
+            type = "decstructor"
+        if name == parent_class:
+            type = "constructor"     
     else:
         if type == "template_function":
             prototype = prototype.split(">")[1].strip()
         name = prototype.split('(')[0].split(" ")[-1].strip()
         returntype = prototype.split(name)[0].strip()
-    params = prototype.split(name)[1]
+        
+    if type == "constructor" or type == "decstructor":
+        returntype = "void"
+        params = "(" + prototype.split("::")[1].split("(")[1]
+    else:
+        params = prototype.split(name)[1]
+        
     qualtype = returntype + params
     qualtype = qualtype.replace(" ", "")
-    
     #retrieve position of function
     pos=[]
     if type == "function":
@@ -74,6 +83,19 @@ def findLocationFunction(data, prototype: str, source):
                         if end != -1:
                             break
                     pos += [start, end, type] 
+    if type == "constructor":
+        for item in data['nodes']:
+            if item['kind'] == "CONSTRUCTOR" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype:
+                end = item['end']
+                start = item['start']
+                pos += [start, end, type] 
+    if type == "decstructor":
+        for item in data['nodes']:
+            if item['kind'] == "DESTRUCTOR" and item['spelling'].replace(" ", "") == name:
+                end = item['end']
+                start = item['start']
+                pos += [start, end, type] 
+        
     return pos
 
 def findLocationClass(data, prototype: str, source, type: str, iteration = 0):
@@ -117,15 +139,15 @@ def findLocationClass(data, prototype: str, source, type: str, iteration = 0):
                 start_line = item['start']
                 j = i+1
                 template_node = data['nodes'][j]
-                while template_node['start'] == start_line:
+                while  j < len(data['nodes']) and template_node['start'] == start_line:
                     if template_node['kind'] == "TEMPLATE_TYPE_PARAMETER":
                         template = template_node['spelling']
                     if template_node['kind'] == "TYPE_REF" and template_node['spelling'] == prototype:
                         returnType = item['prototype'].split(" ")[0]
                         func_prototype = "template <typename " + template + "> " + returnType +" " + name + " :: " +item['displayname']
                         pos += findLocationFunction(data, func_prototype, source)
-                    j += 1
-                    template_node = data['nodes'][j]     
+                    template_node = data['nodes'][j]    
+                    j+=1 
             #find start and end positions of all classes that inherits from this class       
             for inherit in item['inherits_from']:
                 if inherit == name:
@@ -143,14 +165,19 @@ def findLocationClass(data, prototype: str, source, type: str, iteration = 0):
 
         
 def prepareData ( source: str):
-   
+
     index = clang.cindex.Index.create()
     tu = index.parse(source)
     
     friendFlag = False
+    access_type =""
     classPointer = -1
     output = {"nodes": []}
     for node in tu.cursor.walk_preorder():
+        
+        if node.kind == clang.cindex.CursorKind.CXX_METHOD or node.kind == clang.cindex.CursorKind.FIELD_DECL:
+            access_type = str(node.access_specifier).split(".")[1]
+  
         if node.kind == clang.cindex.CursorKind.CLASS_DECL:
             classPointer = 0
             friendFlag = False
@@ -191,7 +218,8 @@ def prepareData ( source: str):
             "is_class": node.kind == clang.cindex.CursorKind.CLASS_DECL,
             "is_enum": node.kind == clang.cindex.CursorKind.ENUM_DECL,
             "inherits_from": [],
-            "friend_with": []
+            "friend_with": [],
+            "access_type" : access_type
         }
         output["nodes"].append(node_dict)
         
