@@ -25,8 +25,10 @@ def isolateFunction(source: str  = typer.Argument(...), destination: str  = type
         parent_class = prototype.split("::")[0].strip().split(" ")[-1]
         findClass = codeParser.positions(destination, "class", "class " + parent_class)
         if findClass == []:
-            print("Warning: Parent Class doesn't exist in " +destination +" file")
-            return 
+            findClass = codeParser.positions(destination, "struct", "struct " + parent_class)
+            if findClass == []:
+                print("Warning: Parent Class doesn't exist in " +destination +" file")
+                return 
         class_end = findClass[1]
         #fixing protoype
         forward_implementation = prototype.split(parent_class)[0] + prototype.split(parent_class)[1]
@@ -66,7 +68,9 @@ def isolateFunction(source: str  = typer.Argument(...), destination: str  = type
 
 @app.command("isolateClass")
 def isolateClass(source: str  = typer.Argument(...), destination: str  = typer.Argument(...), prototype: str  = typer.Argument(...)):
-    position = codeParser.positions(source, "class", prototype)
+    
+    type = prototype.split(" ")[0]
+    position = codeParser.positions(source, type, prototype)
     if position == []:
         print("Class not found in " + source)
         return
@@ -78,7 +82,7 @@ def isolateClass(source: str  = typer.Argument(...), destination: str  = typer.A
     things = []
     # things += lines[class_start-1: class_end]
     for i in range(0, int(n), 3): 
-        if position[i+2] == "class":
+        if position[i+2] == type:
             class_start = position[i]
             class_end = position[i+1]
             start_line= class_start
@@ -90,7 +94,7 @@ def isolateClass(source: str  = typer.Argument(...), destination: str  = typer.A
             things += lines[start_line - 1:end_line]
     
     
-    class_position = codeParser.positions(destination, "class", prototype, 1)
+    class_position = codeParser.positions(destination, type, prototype, 1)
     newCommenter.CommentOutClass(destination, prototype)
     
     beginning = 0 #codeParser.positions(destination, "start", "")

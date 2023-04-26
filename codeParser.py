@@ -49,13 +49,13 @@ def findLocationFunction(data, prototype: str, source):
                 pos += [start, end, type]
     if type == "member_function":
         for item in data['nodes']:
-            if item['kind'] == "CXX_METHOD" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype:
+            if item['kind'] == "CXX_METHOD" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype and item['parent_class']!="" and parent_class == item['parent_class'].split(" ")[1]:
                 end = item['end']
                 start = item['start']
                 pos += [start, end, type]          
     if type == "template_function" or type == "template_member_function":
         for item in data['nodes']:
-            if item['kind'] == "FUNCTION_TEMPLATE" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype:
+            if (item['kind'] == "FUNCTION_TEMPLATE" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype and ((type == "template_function" and item['access_type'] == "") or ( type == "template_member_function" and item['parent_class'] != "" and parent_class == item['parent_class'].split(" ")[1])  )  ):
                     start = item['start']
                     end =-1
                     with open(source, "r") as source_file:
@@ -162,8 +162,7 @@ def findLocationClass(data, prototype: str, source, type: str, iteration = 0):
                     classes +=  [type + " "+  item['spelling']]
             i = i+1
     return pos
-
-        
+     
 def prepareData ( source: str):
 
     index = clang.cindex.Index.create()
@@ -171,10 +170,20 @@ def prepareData ( source: str):
     
     friendFlag = False
     access_type =""
+    parent_class = ""
     classPointer = -1
     output = {"nodes": []}
     for node in tu.cursor.walk_preorder():
         
+        # if node.kind == clang.cindex.CursorKind.FUNCTION_TEMPLATE:
+        parent = node.semantic_parent
+        if parent is None:
+            parent_class=""
+        elif parent.kind == clang.cindex.CursorKind.CLASS_DECL:
+            parent_class = "class " + str(parent.spelling)
+        elif parent.kind == clang.cindex.CursorKind.STRUCT_DECL:
+            parent_class = "struct " + str(parent.spelling)
+            
         if node.kind == clang.cindex.CursorKind.CXX_METHOD or node.kind == clang.cindex.CursorKind.FIELD_DECL:
             access_type = str(node.access_specifier).split(".")[1]
   
@@ -191,7 +200,7 @@ def prepareData ( source: str):
 
         elif friendFlag:
             friend = node.spelling
-            if len(friend.split("class")) == 1:
+            if len(friend.split("class")) == 1: #check this: or len(friend.split("struct")):
                 friend = node.type.spelling.split('(')[0] + node.displayname
             output["nodes"][classPointer]["friend_with"].append(friend)
             friendFlag = False
@@ -219,7 +228,8 @@ def prepareData ( source: str):
             "is_enum": node.kind == clang.cindex.CursorKind.ENUM_DECL,
             "inherits_from": [],
             "friend_with": [],
-            "access_type" : access_type
+            "access_type" : access_type,
+            "parent_class" : parent_class,
         }
         output["nodes"].append(node_dict)
         
@@ -235,7 +245,7 @@ def positions ( source: str, type: str, prototype: str , type1=0):
     data = prepareData(source)
     pos =[]
     
-    if type == "class": # or type == "struct":
+    if type == "class" or type == "struct":
         pos = findLocationClass(data, prototype , source, type, type1)  
         
     if type == "function":
