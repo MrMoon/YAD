@@ -4,6 +4,22 @@ import orjson, json
 import clang.cindex 
 
 def findLocationFunction(data, prototype: str, source):
+    #check for static, virtual, and pure virtual
+    is_static = False
+    is_pure = False
+    is_virtual = False
+    if len(prototype.split("static")) > 1:
+        is_static= True
+    if len(prototype.split("virtual")) > 1:
+        is_virtual= True
+        if len( prototype.split("=0")) > 1:
+            prototype = prototype.split("=0")[0]
+            is_pure= True
+            print(prototype)
+        elif len( prototype.split("= 0")) > 1:
+            prototype = prototype.split("= 0")[0]
+            is_pure= True
+            print(prototype)
     #label function by its type 
     if len(prototype.split("template"))> 1 :
         if len(prototype.split("::")) > 1 :
@@ -39,23 +55,28 @@ def findLocationFunction(data, prototype: str, source):
         
     qualtype = returntype + params
     qualtype = qualtype.replace(" ", "")
+    print(qualtype)
+    print(is_pure)
+    print(is_virtual)
     #retrieve position of function
     pos=[]
     if type == "function":
         for item in data['nodes']:
             if item['kind'] == "FUNCTION_DECL" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype:
-                end = item['end']
-                start = item['start']
-                pos += [start, end, type]
+                if is_static == item['is_static'] and is_virtual == item['is_virtual'] and is_pure == item['is_pure']:
+                    end = item['end']
+                    start = item['start']
+                    pos += [start, end, type]
     if type == "member_function":
         for item in data['nodes']:
             if item['kind'] == "CXX_METHOD" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype and item['parent_class']!="" and parent_class == item['parent_class'].split(" ")[1]:
-                end = item['end']
-                start = item['start']
-                pos += [start, end, type]          
+                if is_static == item['is_static'] and is_virtual == item['is_virtual'] and is_pure == item['is_pure']:
+                    end = item['end']
+                    start = item['start']
+                    pos += [start, end, type]          
     if type == "template_function" or type == "template_member_function":
         for item in data['nodes']:
-            if (item['kind'] == "FUNCTION_TEMPLATE" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype and ((type == "template_function" and item['access_type'] == "") or ( type == "template_member_function" and item['parent_class'] != "" and parent_class == item['parent_class'].split(" ")[1])  )  ):
+            if (item['kind'] == "FUNCTION_TEMPLATE" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype and is_static == item['is_static'] and ((type == "template_function" and item['access_type'] == "") or ( type == "template_member_function" and item['parent_class'] != "" and parent_class == item['parent_class'].split(" ")[1])  )  ):
                     start = item['start']
                     end =-1
                     with open(source, "r") as source_file:
@@ -215,14 +236,14 @@ def prepareData ( source: str):
             "type": str(node.type),
             "start": int(node.location.line),
             "end": int(node.extent.end.line),
-            "semantic_parent": str(node.semantic_parent),
-            "lexical_parent": str(node.lexical_parent),
+            #"semantic_parent": str(node.semantic_parent),
+            #"lexical_parent": str(node.lexical_parent),
             "mangled_name": node.mangled_name,
             "is_const_method": node.is_const_method(),
-            "is_const_method": node.is_const_method(),
-            "is_virtual_method": node.is_virtual_method(),
-            "is_pure_virtual_method": node.is_pure_virtual_method(),
-            "is_template": node.kind == clang.cindex.CursorKind.FUNCTION_TEMPLATE,
+            "is_static": node.is_static_method(),
+            "is_virtual": node.is_virtual_method(),
+            "is_pure": node.is_pure_virtual_method(),
+            #"is_template": node.kind == clang.cindex.CursorKind.FUNCTION_TEMPLATE,
             "is_struct": node.kind == clang.cindex.CursorKind.STRUCT_DECL,
             "is_class": node.kind == clang.cindex.CursorKind.CLASS_DECL,
             "is_enum": node.kind == clang.cindex.CursorKind.ENUM_DECL,
