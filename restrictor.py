@@ -1,5 +1,5 @@
 import yaml
-import orjson, json
+import json
 import typer
 import re
 import codeParser
@@ -249,8 +249,7 @@ def WordRestrict(source: str  = typer.Argument(..., help="The path of the .cpp o
         source = scopeGetter(source, scope)
     
     #Check if keyword exists and print true or false according to restriction
-    if re.search(fr"(?:(?<=\s)|(?<=^)){keyword}(?=\s|$)", source):
-        print(re.search(fr"(?:(?<=\s)|(?<=^)){keyword}(?=\s|$)", source))
+    if re.search(fr"(?i).*{re.escape(keyword)}.*", source):
         if restriction.lower() == "at_least" or restriction.lower() == "exactly":
             if not hide:
                 print("True")
@@ -274,7 +273,7 @@ def WordRestrict(source: str  = typer.Argument(..., help="The path of the .cpp o
 #Function to restrict a single class, no need for the YAML file, further explanation available exactly below function definition.
 @app.command("class")
 def ClassRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
-                 restriction: str = typer.Argument(..., help="The restriction type used for 3 ways of checking:\n\nat_least: The class being checked must exist (It can be with other keywords).\n\nexactly: The class being checked must only exist (It can not be with other libraries).\n\nforbidden: The class being checked must not exist."),
+                 restriction: str = typer.Argument(..., help="The restriction type used for 3 ways of checking:\n\nat_least: The class being checked must exist (It can be with other classes).\n\nexactly: The class being checked must only exist (It can not be with other classes).\n\nforbidden: The class being checked must not exist."),
                  prototype: str = typer.Argument(..., help="The class the user wants to check (Must input like this: \"class name\")."),
                  scope: str = typer.Argument(..., help="The scope the user wants to check inside (Function or Class)."),
                  hide:bool = typer.Argument(False, hidden=True, help="A hidden variable for developers use, used to return boolean")):
@@ -289,16 +288,22 @@ def ClassRestrict(source: str  = typer.Argument(..., help="The path of the .cpp 
     
     #Check if global scope or not, if not then use scopeGetter to get everything in the scope defined by the user
     if scope.lower() == "global" or scope == "":
+        data = codeParser.prepareData(source)
         with open(source, 'r') as f:
-            data = f.read()
+            scopeG = f.read()
     else:
-        data = scopeGetter(source, scope)
+        scopeG = scopeGetter(source, scope)
+        file = open("restrictorGen.cpp", "w")
+        file.write(scopeG)
+        file.close()
+        data = codeParser.prepareData("restrictorGen.cpp")
 
     prototype = prototype.strip()
+    empty = []
     #Check if class exists and print true or false according to restriction
-    if re.search(fr"(?:(?<=\s)|(?<=^)){prototype}.*{'{'}(?=\s|$)", data):
+    if codeParser.findLocationClass(data, prototype, source, "class") != empty:
         if restriction.lower() == "exactly":
-            if len(re.findall(r"(?:(?<=\s)|(?<=^))class.*?\{(?=\s|$)", data, flags=re.MULTILINE)) > 1:
+            if len(re.findall(r"(?:(?<=\s)|(?<=^))class.*?\{(?=\s|$)", scopeG, flags=re.MULTILINE)) > 1:
                 if not hide:
                     print("False")
                 return False
@@ -329,7 +334,7 @@ def ClassRestrict(source: str  = typer.Argument(..., help="The path of the .cpp 
 #Function to restrict a single function, no need for the YAML file, further explanation available exactly below function definition.
 @app.command("function")
 def FuncRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
-                 restriction: str = typer.Argument(..., help="The restriction type used for 3 ways of checking:\n\nat_least: The function being checked must exist (It can be with other keywords).\n\nexactly: The function being checked must only exist (It can not be with other libraries).\n\nforbidden: The function being checked must not exist."),
+                 restriction: str = typer.Argument(..., help="The restriction type used for 3 ways of checking:\n\nat_least: The function being checked must exist (It can be with other functions).\n\nexactly: The function being checked must only exist (It can not be with other functions).\n\nforbidden: The function being checked must not exist."),
                  prototype: str = typer.Argument(..., help="The function the user wants to check (Must input like this: \"int functionName(int, int)\"."),
                  scope: str = typer.Argument(..., help="The scope the user wants to check inside (Function or Class)."),
                  hide:bool = typer.Argument(False, hidden=True, help="A hidden variable for developers use, used to return boolean")):
@@ -344,10 +349,15 @@ def FuncRestrict(source: str  = typer.Argument(..., help="The path of the .cpp o
     
     #Check if global scope or not, if not then use scopeGetter to get everything in the scope defined by the user
     if scope.lower() == "global" or scope == "":
+        data = codeParser.prepareData(source)
         with open(source, 'r') as f:
-            data = f.read()
+            scopeG = f.read()
     else:
-        data = scopeGetter(source, scope)
+        scopeG = scopeGetter(source, scope)
+        file = open("restrictorGen.cpp", "w")
+        file.write(scopeG)
+        file.close()
+        data = codeParser.prepareData("restrictorGen.cpp")
     
     #Making the regex suitable to find function no matter the user input
     prototype = prototype.strip()
@@ -359,11 +369,11 @@ def FuncRestrict(source: str  = typer.Argument(..., help="The path of the .cpp o
         prototypeRegex += ".*" + p.strip().split(' ')[0] + ".*,"
     prototypeRegex = prototypeRegex[:-1] + ').*\n*.*{[\s\S]*}(?=\s|$)'
     
-
+    empty = []
     #Check if function exists and print true or false according to restriction
-    if re.search(prototypeRegex, data) != None:
+    if codeParser.findLocationFunction(data, prototype, source) != empty:
         if restriction.lower() == "exactly":
-            if len(re.findall(r"\b[a-zA-Z_][a-zA-Z0-9_]*\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\([^)]*\)\s*\{[^{}]*\}", data, flags=re.MULTILINE)) > 1:
+            if len(re.findall(r"\b[a-zA-Z_][a-zA-Z0-9_]*\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\([^)]*\)\s*\{[^{}]*\}", scopeG, flags=re.MULTILINE)) > 1:
                 if not hide:
                     print("False")
                 return False
@@ -394,7 +404,7 @@ def FuncRestrict(source: str  = typer.Argument(..., help="The path of the .cpp o
 #Function to restrict a single (private/public/protected) function, no need for the YAML file, further explanation available exactly below function definition.
 @app.command("access")
 def AccessRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
-                 restriction: str = typer.Argument(..., help="The restriction type used for 3 ways of checking:\n\nat_least: The function being checked must exist (It can be with other keywords).\n\nexactly: The function being checked must only exist (It can not be with other libraries).\n\nforbidden: The function being checked must not exist."),
+                 restriction: str = typer.Argument(..., help="The restriction type used for 3 ways of checking:\n\nat_least: The function being checked must exist (It can be with other functions).\n\nexactly: The function being checked must only exist (It can not be with other functions).\n\nforbidden: The function being checked must not exist."),
                  prototype: str = typer.Argument(..., help="The function the user wants to check (Must input like this: \"int functionName(int, int)\" or \"int functionName(int x,int y)\")."),
                  scope: str = typer.Argument(..., help="The scope the user wants to check inside (Function or Class)."),
                  type: str = typer.Argument(..., help="The access type the user wants to check for (private/public/protected)."),
@@ -421,8 +431,8 @@ def AccessRestrict(source: str  = typer.Argument(..., help="The path of the .cpp
     if len(prototype.split("virtual")) == 1 and len(prototype.split("static")) == 1:
         proto = prototype.split(' ')[0] + ' (' + prototype.split('(')[1].strip()
     else:
-        proto = prototype.split(' ')[1] + ' (' + prototype.split('(')[1][:-1].strip()
-    spelling = prototype.split('(')[0].split(' ')[-1]
+        proto = prototype.split(' ')[1] + ' (' + prototype.split('(')[1].strip()
+    spelling = prototype.split('(')[0].split(' ')[-1].split('::')[-1]
     
     for decl in data['nodes']:
         if decl['kind'] == "CXX_METHOD" and decl['spelling'] == spelling and decl['prototype'] == proto and decl['access_type'] == type.upper():
@@ -431,6 +441,64 @@ def AccessRestrict(source: str  = typer.Argument(..., help="The path of the .cpp
         print("False")
     return False
 
+
+
+#Function to restrict a single (private/public/protected) function, no need for the YAML file, further explanation available exactly below function definition.
+@app.command("checkAPI")
+def checkAPI(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
+                 restriction: str = typer.Argument(..., help="The restriction type used for 2 ways of checking:\n\nat_least: Everything being checked must exist (It can be with other functions/classes).\n\nexactly: Everything being checked must only exist (It can not be with other functions/classes)."),
+                 compare: str = typer.Argument(..., help="The path of the .cpp or .h file the user wants the source file to be compared to.")):
+    """
+    This tool will compare two files together, the source and compare file, it will check if the function prototypes and class names match then return true or false accordingly.
+    """
+    #Makes sure that restriction inputted is a viable restriction
+    if restriction.lower() not in ["exactly", "forbidden", "at_least"]:
+        print("Invalid Restriction Input")
+        return False
+    
+    #Varibales and loop used to create the YAML file needed to run restrictor, YAML file made from compare file.
+    allPrivFunctions = []
+    allPublicFunctions =[]
+    allProtectedFunctions = []
+    allFunctions = []
+    allClasses = []
+    data = codeParser.prepareData(compare)
+    virtual = ""
+    const = ""
+    for decl in data['nodes']:
+        if decl['kind'] == "CXX_METHOD":
+            if decl['is_virtual_method'] == True:
+                virtual = "virtual "
+            else:
+                virtual = ""
+            if decl['is_const_method'] == True:
+                const = " const"
+            else:
+                const = ""
+            if decl['access_type'] == "":
+                allFunctions.append(decl['prototype'].split(' ')[0] + " " + decl['displayname'] + const)
+            elif decl['access_type'] == 'PRIVATE':
+                allPrivFunctions.append(virtual + decl['prototype'].split(' ')[0] + " " + decl['parent_class'].split(' ')[1] + "::" + decl['displayname'] + const)
+            elif decl['access_type'] == 'PUBLIC':
+                allPublicFunctions.append(virtual + decl['prototype'].split(' ')[0] + " " + decl['parent_class'].split(' ')[1] + "::" + decl['displayname'] + const)
+            elif decl['access_type'] == 'PROTECTED':
+                allProtectedFunctions.append(virtual + decl['prototype'].split(' ')[0] + " " + decl['parent_class'].split(' ')[1] + "::" + decl['displayname'] + const )
+        elif decl['kind'] == "FUNCTION_DECL":
+            if len(decl['prototype'].split('**')) == 1 and len(decl['prototype'].split('*')):
+                allFunctions.append(decl['prototype'].split(' ')[0] + " " + decl['displayname'] + const)
+            elif len(decl['prototype'].split('**')) > 1:
+                allFunctions.append(decl['prototype'].split('**')[0] + "**" + " " + decl['displayname'] + const)
+            else:
+                allFunctions.append(decl['prototype'].split(' ')[0] + "*" + " " + decl['displayname' + const])
+        if decl['kind'] == "CLASS_DECL":
+            allClasses.append("class " + decl['spelling'])
+    
+    #Write the YAML file
+    file_yaml = {'classes': {'restriction': f'{restriction}', 'scope': 'global', 'names': list(set(allClasses))}, 'functions': {'restriction': f'{restriction}', 'scope': 'global', 'names': list(set(allFunctions))}, 'public_functions': {'restriction': f'{restriction}', 'scope': 'global', 'names': list(set(allPublicFunctions))}, 'private_functions': {'restriction': f'{restriction}', 'scope': 'global', 'names': list(set(allPrivFunctions))}, 'protected_functions': {'restriction': f'{restriction}', 'scope': 'global', 'names': list(set(allProtectedFunctions))}}
+    with open("checkAPI.yaml", 'w') as file:
+        yaml.dump(file_yaml, file)
+
+    Restrict(source, "checkAPI.YAML")
 
 
 if __name__ == "__main__":
