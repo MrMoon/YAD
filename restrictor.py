@@ -45,7 +45,8 @@ def scopeGetter(source:str, scope:str ):
 #Function that uses all other restriction functions that are below it, it recieves a YAML file which lets it know which functions to run
 @app.command("restrict")
 def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
-             rules: str  = typer.Argument(..., help="The path of the YAML file containing user requiremnets")):
+             rules: str  = typer.Argument(..., help="The path of the YAML file containing user requiremnets"),
+             hide:bool = typer.Argument(False, hidden=True, help="A hidden variable for developers use, used to print the names of the functions or classes that are violating YAML file")):
     """
     This tool will recieve a YAML file made by the user and restrict a .cpp or .h file according to that YAML file, it will return a list of findings (for YAML file explanation check GitHub).
     """
@@ -72,6 +73,8 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
             if exactCount != 0 and compareCount != exactCount:
                 critAns = critAns & False
             print(str(critCount) + ". " + critOld + " restriction result is " + str(critAns))
+            if hide:
+                print()
             critCount += 1
             critAns = True
             compareCount = 0
@@ -109,8 +112,12 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
             for cls in critData['names']:
                 if critData['restriction'].lower() != 'exactly':
                     critAns = critAns & ClassRestrict(newSource, critData['restriction'], cls, critData['scope'], True)
+                    if ClassRestrict(newSource, critData['restriction'], cls, critData['scope'], True) == False and hide:
+                        print("Violation in Classes: " + cls)
                 else:
                     critAns = critAns & ClassRestrict(newSource, 'at_least', cls, critData['scope'], True)
+                    if ClassRestrict(newSource, critData['restriction'], cls, critData['scope'], True) == False and hide:
+                        print("Violation in Classes: " + cls)
                     exactCount += 1
                     if exactCount == 1:
                         if critData['scope'].lower() == "global" or critData['scope'] == None:
@@ -125,8 +132,12 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
             for func in critData['names']:
                 if critData['restriction'].lower() != 'exactly':
                     critAns = critAns & FuncRestrict(newSource, critData['restriction'], func, critData['scope'], True)
+                    if FuncRestrict(newSource, critData['restriction'], func, critData['scope'], True) == False and hide:
+                        print("Violation in Functions: " + func)
                 else:
                     critAns = critAns & FuncRestrict(newSource, 'at_least', func, critData['scope'], True)
+                    if FuncRestrict(newSource, critData['restriction'], func, critData['scope'], True) == False and hide:
+                        print("Violation in Functions: " + func)
                     exactCount += 1
                     if exactCount == 1:
                         if critData['scope'].lower() == "global" or critData['scope'] == None:
@@ -142,8 +153,12 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
             for func in critData['names']:
                 if critData['restriction'].lower() != 'exactly':
                     critAns = critAns & AccessRestrict(newSource, critData['restriction'], func, critData['scope'], access, True)
+                    if AccessRestrict(newSource, critData['restriction'], func, critData['scope'], access, True) == False and hide:
+                        print("Violation in " + access + " Functions: " + func)
                 else:
                     critAns = critAns & AccessRestrict(newSource, 'at_least', func, critData['scope'], access, True)
+                    if AccessRestrict(newSource, critData['restriction'], func, critData['scope'], access, True) == False and hide:
+                        print("Violation in " + access + " Functions: " + func)
                     exactCount += 1
                     if exactCount == 1:
                         if critData['scope'].lower() == "global" or critData['scope'] == None:
@@ -158,6 +173,8 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
     if exactCount != 0 and compareCount != exactCount:
         critAns = critAns & False
     print(str(critCount) + ". " + critOld + " restriction result is " + str(critAns))
+    if hide:
+        print()
 
 
 
@@ -446,8 +463,9 @@ def AccessRestrict(source: str  = typer.Argument(..., help="The path of the .cpp
 #Function to restrict a single (private/public/protected) function, no need for the YAML file, further explanation available exactly below function definition.
 @app.command("checkAPI")
 def checkAPI(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
-                 restriction: str = typer.Argument(..., help="The restriction type used for 2 ways of checking:\n\nat_least: Everything being checked must exist (It can be with other functions/classes).\n\nexactly: Everything being checked must only exist (It can not be with other functions/classes)."),
-                 compare: str = typer.Argument(..., help="The path of the .cpp or .h file the user wants the source file to be compared to.")):
+            restriction: str = typer.Argument(..., help="The restriction type used for 2 ways of checking:\n\nat_least: Everything being checked must exist (It can be with other functions/classes).\n\nexactly: Everything being checked must only exist (It can not be with other functions/classes)."),
+            compare: str = typer.Argument(..., help="The path of the .cpp or .h file the user wants the source file to be compared to."),
+            violations: str  = typer.Option(False, "-v", help="If true this will make checkAPI print the functions and classes that are causing violations (default is false).")):
     """
     This tool will compare two files together, the source and compare file, it will check if the function prototypes and class names match then return true or false accordingly.
     """
@@ -498,7 +516,15 @@ def checkAPI(source: str  = typer.Argument(..., help="The path of the .cpp or .h
     with open("checkAPI.yaml", 'w') as file:
         yaml.dump(file_yaml, file)
 
-    Restrict(source, "checkAPI.YAML")
+    violations = violations.lower()
+    if violations not in ["true", "false"]:
+        print("Invalid Violations (-v) Input")
+        return False
+    
+    if violations == "true":
+        Restrict(source, "checkAPI.YAML", True)
+    else:
+        Restrict(source, "checkAPI.YAML")
 
 
 if __name__ == "__main__":
