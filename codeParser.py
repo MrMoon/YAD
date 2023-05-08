@@ -1,7 +1,6 @@
-import re
-import os
 import orjson, json
 import clang.cindex 
+from pathlib import Path
 
 def findLocationFunction(data, prototype: str, source):
     #check for static, virtual, and pure virtual
@@ -15,11 +14,10 @@ def findLocationFunction(data, prototype: str, source):
         if len( prototype.split("=0")) > 1:
             prototype = prototype.split("=0")[0]
             is_pure= True
-            print(prototype)
         elif len( prototype.split("= 0")) > 1:
             prototype = prototype.split("= 0")[0]
             is_pure= True
-            print(prototype)
+            
     #label function by its type 
     if len(prototype.split("template"))> 1 :
         if len(prototype.split("::")) > 1 :
@@ -55,28 +53,26 @@ def findLocationFunction(data, prototype: str, source):
         
     qualtype = returntype + params
     qualtype = qualtype.replace(" ", "")
-    print(qualtype)
-    print(is_pure)
-    print(is_virtual)
+
     #retrieve position of function
     pos=[]
     if type == "function":
         for item in data['nodes']:
             if item['kind'] == "FUNCTION_DECL" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype:
-                if is_static == item['is_static'] and is_virtual == item['is_virtual'] and is_pure == item['is_pure']:
+                if is_static == item['is_static_method'] and is_virtual == item['is_virtual_method'] and is_pure == item['is_pure']:
                     end = item['end']
                     start = item['start']
-                    pos += [start, end, type]
+                    pos += [start, end, type, item['access_type']]
     if type == "member_function":
         for item in data['nodes']:
             if item['kind'] == "CXX_METHOD" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype and item['parent_class']!="" and parent_class == item['parent_class'].split(" ")[1]:
-                if is_static == item['is_static'] and is_virtual == item['is_virtual'] and is_pure == item['is_pure']:
+                if is_static == item['is_static_method'] and is_virtual == item['is_virtual_method'] and is_pure == item['is_pure']:
                     end = item['end']
                     start = item['start']
-                    pos += [start, end, type]          
+                    pos += [start, end, type, item['access_type']]          
     if type == "template_function" or type == "template_member_function":
         for item in data['nodes']:
-            if (item['kind'] == "FUNCTION_TEMPLATE" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype and is_static == item['is_static'] and ((type == "template_function" and item['access_type'] == "") or ( type == "template_member_function" and item['parent_class'] != "" and parent_class == item['parent_class'].split(" ")[1])  )  ):
+            if (item['kind'] == "FUNCTION_TEMPLATE" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype and is_static == item['is_static_method'] and ((type == "template_function" and item['access_type'] == "invalid") or ( type == "template_member_function" and item['parent_class'] != "" and parent_class == item['parent_class'].split(" ")[1])  )  ):
                     start = item['start']
                     end =-1
                     with open(source, "r") as source_file:
@@ -87,7 +83,7 @@ def findLocationFunction(data, prototype: str, source):
                         if char == '{':
                             openb = openb+1
                     if openb == 0:
-                        pos += [start, start, type]
+                        pos += [start, start, type, item['access_type']]
                         continue
                     #find when the function ends 
                     i = start 
@@ -103,19 +99,19 @@ def findLocationFunction(data, prototype: str, source):
                         i = i+1
                         if end != -1:
                             break
-                    pos += [start, end, type] 
+                    pos += [start, end, type, item['access_type']] 
     if type == "constructor":
         for item in data['nodes']:
             if item['kind'] == "CONSTRUCTOR" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype:
                 end = item['end']
                 start = item['start']
-                pos += [start, end, type] 
+                pos += [start, end, type, item['access_type']] 
     if type == "decstructor":
         for item in data['nodes']:
             if item['kind'] == "DESTRUCTOR" and item['spelling'].replace(" ", "") == name:
                 end = item['end']
                 start = item['start']
-                pos += [start, end, type] 
+                pos += [start, end, type, item['access_type']] 
         
     return pos
 
@@ -138,10 +134,7 @@ def findLocationClass(data, prototype: str, source, type: str, iteration = 0):
                     end = item['end']
                     class_start = start 
                     class_end = end
-                    if iteration == 1:
-                        pos = [start, end, type]
-                        return pos
-                    pos+=[start, end, type]
+                    pos+=[start, end, type, ""]
                     flag =1
             if flag  == 0 : 
                 i = i+1
@@ -182,12 +175,22 @@ def findLocationClass(data, prototype: str, source, type: str, iteration = 0):
                     end = item['end']
                     classes +=  [type + " "+  item['spelling']]
             i = i+1
+        if iteration == 1:
+            return pos
+
     return pos
      
 def prepareData ( source: str):
 
+    #comment out libraries and include in source file 
+    
     index = clang.cindex.Index.create()
     tu = index.parse(source)
+    
+    #check if source code compiles
+    if len(tu.diagnostics) > 0:
+        print("Error: " + source + " doesn't compile successfully")
+        return ["error"]
     
     friendFlag = False
     access_type =""
@@ -196,18 +199,18 @@ def prepareData ( source: str):
     output = {"nodes": []}
     for node in tu.cursor.walk_preorder():
         
-        # if node.kind == clang.cindex.CursorKind.FUNCTION_TEMPLATE:
-        parent = node.semantic_parent
-        if parent is None:
-            parent_class=""
-        elif parent.kind == clang.cindex.CursorKind.CLASS_DECL:
-            parent_class = "class " + str(parent.spelling)
-        elif parent.kind == clang.cindex.CursorKind.STRUCT_DECL:
-            parent_class = "struct " + str(parent.spelling)
+        access_type = str(node.access_specifier).split(".")[1]
+        if access_type == "INVALID":
+            parent_class = ""
+        else:
+            parent = node.semantic_parent
+            if parent is None:
+                parent_class=""
+            elif parent.kind == clang.cindex.CursorKind.CLASS_DECL:
+                parent_class = "class " + str(parent.spelling)
+            elif parent.kind == clang.cindex.CursorKind.STRUCT_DECL:
+                parent_class = "struct " + str(parent.spelling)
             
-        if node.kind == clang.cindex.CursorKind.CXX_METHOD or node.kind == clang.cindex.CursorKind.FIELD_DECL:
-            access_type = str(node.access_specifier).split(".")[1]
-  
         if node.kind == clang.cindex.CursorKind.CLASS_DECL:
             classPointer = 0
             friendFlag = False
@@ -236,20 +239,16 @@ def prepareData ( source: str):
             "type": str(node.type),
             "start": int(node.location.line),
             "end": int(node.extent.end.line),
-            #"semantic_parent": str(node.semantic_parent),
-            #"lexical_parent": str(node.lexical_parent),
             "mangled_name": node.mangled_name,
             "is_const_method": node.is_const_method(),
-            "is_static": node.is_static_method(),
-            "is_virtual": node.is_virtual_method(),
+            "is_static_method": node.is_static_method(),
+            "is_virtual_method": node.is_virtual_method(),
             "is_pure": node.is_pure_virtual_method(),
-            #"is_template": node.kind == clang.cindex.CursorKind.FUNCTION_TEMPLATE,
             "is_struct": node.kind == clang.cindex.CursorKind.STRUCT_DECL,
             "is_class": node.kind == clang.cindex.CursorKind.CLASS_DECL,
-            "is_enum": node.kind == clang.cindex.CursorKind.ENUM_DECL,
             "inherits_from": [],
             "friend_with": [],
-            "access_type" : access_type,
+            "access_type" : access_type.lower(),
             "parent_class" : parent_class,
         }
         output["nodes"].append(node_dict)
@@ -261,13 +260,18 @@ def prepareData ( source: str):
         data = orjson.loads(f.read())
     return data
 
-def positions ( source: str, type: str, prototype: str , type1=0):
-    
+def positions ( source: str, type: str, prototype: str, option = 0):
+    source_path = Path(source)
+    if source_path.exists() == False:
+        print("Error: " + source + " doesn't exist")
+        return ["error"]
     data = prepareData(source)
+    if data == ["error"]:
+        return data
     pos =[]
     
     if type == "class" or type == "struct":
-        pos = findLocationClass(data, prototype , source, type, type1)  
+        pos = findLocationClass(data, prototype , source, type, option)  
         
     if type == "function":
         pos = findLocationFunction( data, prototype, source)  

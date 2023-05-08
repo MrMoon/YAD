@@ -1,6 +1,7 @@
 import typer
-import codeParser  
-import newCommenter
+import codeParser
+import commentController
+
 
 app = typer.Typer()
 
@@ -11,6 +12,8 @@ def isolateFunction(source: str  = typer.Argument(...), destination: str  = type
     """
     
     findFunction = codeParser.positions(source,"function", prototype)
+    if findFunction == ["error"]:
+        return
     if findFunction == None or findFunction == []:
         print("Warning: Function doesn't exist in " + source +" file")
         return 
@@ -23,8 +26,12 @@ def isolateFunction(source: str  = typer.Argument(...), destination: str  = type
     if findFunction[2] != "function" and findFunction[2] != "template_function":
         parent_class = prototype.split("::")[0].strip().split(" ")[-1]
         findClass = codeParser.positions(destination, "class", "class " + parent_class)
+        if findClass == ["error"]:
+            return
         if findClass == []:
             findClass = codeParser.positions(destination, "struct", "struct " + parent_class)
+            if findClass == ["error"]:
+                return
             if findClass == []:
                 print("Warning: Parent Class doesn't exist in " +destination +" file")
                 return 
@@ -34,7 +41,7 @@ def isolateFunction(source: str  = typer.Argument(...), destination: str  = type
         forward_implementation = forward_implementation.split("::")[0] + forward_implementation.split("::")[1]
     
     #commenting out the function in destination file 
-    newCommenter.CommentOutFunction(destination, prototype, 1)
+    commentController.CommentOutFunction(destination, prototype, 1)
     
     #case: forward declaration or memebr functions implemented outside a class
     i=0
@@ -76,6 +83,11 @@ def isolateClass(
         option = 1
     type = prototype.split(" ")[0]
     position = codeParser.positions(source, type, prototype,option)
+    
+    if position == ["error"]:
+        return
+    
+    #checking if class exists in source code
     if position == []:
         print("Class not found in " + source)
         return
@@ -89,24 +101,25 @@ def isolateClass(
         if position[i+2] == type:
             class_start = position[i]
             class_end = position[i+1]
-            start_line= class_start
-            end_line = class_end
-        else:
-            start_line = position[i]
-            end_line = position[i+1]
+        start_line = position[i]
+        end_line = position[i+1]
+        #functions implemented outside a class
         if start_line <= class_start or end_line >= class_end:
             things += lines[start_line - 1:end_line]
     
-    
+    #checking if class already exists in destination code and commenting it out
     class_position = codeParser.positions(destination, type, prototype, 1)
-    newCommenter.CommentOutClass(destination, prototype, 1)
+    if class_position == ["error"]:
+        return
+    commentController.CommentOutClass(destination, prototype, 1)
     
-    beginning = 0 #codeParser.positions(destination, "start", "")
     with open(destination, "r") as destination_file:
         lines = destination_file.readlines()
-            
+        
+        #if class doesnt exist in destination.cpp, the isolated class will be added at the end of the code.
         if class_position == []:
             lines =  lines +  ["\n"]  + things
+        #if class exists in destination.cpp, it will be replaced by the isolated class.
         else:
             lines =  lines[0: class_position[0]-1] + things +  ["\n"] + lines[class_position[0]-1: ]
     with open(destination, "w") as destination_file:

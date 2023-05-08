@@ -131,11 +131,8 @@ def CommentOutClass(
     prototype: str  = typer.Argument(..., help="The class the user wants to check (Must input like this: \"class name\")."),
     option1: str  = typer.Option("True", "-all", help="If true this will isolate the class with all its children classes"),
     isolate =0 ):   
-    option =0
-    if option1.lower() == "true":
-        option = 1
     type = prototype.split(" ")[0]
-    commentMaker(source, type , prototype, isolate, option)
+    commentMaker(source, type , prototype, isolate, option1)
 
 
 
