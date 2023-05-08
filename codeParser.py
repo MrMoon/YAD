@@ -3,12 +3,19 @@ import clang.cindex
 from pathlib import Path
 
 def findLocationFunction(data, prototype: str, source):
-    #check for static, virtual, and pure virtual
+    #check for static, virtual, pure virtual, and constru
     is_static = False
     is_pure = False
     is_virtual = False
+    has_initializer = "false"
+    
+    #Check constructos with initializer lists
+    if len(prototype.split("(")) > 2:
+        has_initializer = "true" 
+    #Check static functions
     if len(prototype.split("static")) > 1:
         is_static= True
+    #Check virtual and pure virtual functions
     if len(prototype.split("virtual")) > 1:
         is_virtual= True
         if len( prototype.split("=0")) > 1:
@@ -38,7 +45,7 @@ def findLocationFunction(data, prototype: str, source):
         if len(name.split("~")) > 1 and name.split("~")[1] == parent_class:
             type = "decstructor"
         if name == parent_class:
-            type = "constructor"     
+            type = "constructor"   
     else:
         if type == "template_function":
             prototype = prototype.split(">")[1].strip()
@@ -48,6 +55,8 @@ def findLocationFunction(data, prototype: str, source):
     if type == "constructor" or type == "decstructor":
         returntype = "void"
         params = "(" + prototype.split("::")[1].split("(")[1]
+        if has_initializer == "true": 
+            params = params.split(":")[0]
     else:
         params = prototype.split(name)[1]
         
@@ -102,7 +111,7 @@ def findLocationFunction(data, prototype: str, source):
                     pos += [start, end, type, item['access_type']] 
     if type == "constructor":
         for item in data['nodes']:
-            if item['kind'] == "CONSTRUCTOR" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype:
+            if item['kind'] == "CONSTRUCTOR" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype and item['initializer_list'] == has_initializer:
                 end = item['end']
                 start = item['start']
                 pos += [start, end, type, item['access_type']] 
@@ -179,7 +188,13 @@ def findLocationClass(data, prototype: str, source, type: str, iteration = 0):
             return pos
 
     return pos
-     
+ 
+#find if a constructor has expression initializer list
+def has_initializer_list(cursor):
+    for child in cursor.get_children():
+        if child.kind.is_expression():
+            return True
+    return False
 def prepareData ( source: str):
 
     #comment out libraries and include in source file 
@@ -192,14 +207,21 @@ def prepareData ( source: str):
         print("Error: " + source + " doesn't compile successfully")
         return ["error"]
     
-    friendFlag = False
-    access_type =""
-    parent_class = ""
-    classPointer = -1
     output = {"nodes": []}
     for node in tu.cursor.walk_preorder():
-        
+        friendFlag = False
+        access_type =""
+        parent_class = ""
+        initializer_list = "false"
+        classPointer = -1
+        #Check if the constructor has an expression initializer list
+        if node.kind == clang.cindex.CursorKind.CONSTRUCTOR:
+            if has_initializer_list(node):
+                initializer_list = "true"
+                
+        #Save access type of member functions, anything else will have value "invalid"              
         access_type = str(node.access_specifier).split(".")[1]
+        #Save name of parent class
         if access_type == "INVALID":
             parent_class = ""
         else:
@@ -250,6 +272,7 @@ def prepareData ( source: str):
             "friend_with": [],
             "access_type" : access_type.lower(),
             "parent_class" : parent_class,
+            "initializer_list" : initializer_list,
         }
         output["nodes"].append(node_dict)
         
