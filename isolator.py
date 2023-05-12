@@ -77,9 +77,9 @@ def isolateClass(
     source: str  = typer.Argument(...), 
     destination: str  = typer.Argument(...), 
     prototype: str  = typer.Argument(...),
-    option1: str  = typer.Option("True", "-all", help="If true this will isolate the class with all its children classes") ):
+    option1: str  = typer.Option("False", "-all", help="If true this will isolate the class with all its children classes") ):
     option =0
-    if option1.lower() == "true":
+    if option1.lower() == "false":
         option = 1
     type = prototype.split(" ")[0]
     position = codeParser.positions(source, type, prototype,option)

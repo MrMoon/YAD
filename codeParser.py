@@ -209,8 +209,9 @@ def prepareData ( source: str):
     #     return ["error"]
     
     output = {"nodes": []}
-    for node in tu.cursor.walk_preorder():
-        friendFlag = False
+    friendFlag = False
+    classPointer = -1
+    for node in tu.cursor.walk_preorder():   
         access_type =""
         parent_class = ""
         initializer_list = "false"
