@@ -208,11 +208,9 @@ def prepareData ( source: str):
     #     print("Error: " + source + " doesn't compile successfully")
     #     return ["error"]
     
-    friendFlag = False
-    classPointer = -1
     output = {"nodes": []}
     for node in tu.cursor.walk_preorder():
-        
+        friendFlag = False
         access_type =""
         parent_class = ""
         initializer_list = "false"
