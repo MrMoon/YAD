@@ -207,13 +207,13 @@ def prepareData ( source: str):
         print("Error: " + source + " doesn't compile successfully")
         return ["error"]
     
+    classPointer = -1
+    friendFlag = False
     output = {"nodes": []}
     for node in tu.cursor.walk_preorder():
-        friendFlag = False
         access_type =""
         parent_class = ""
         initializer_list = "false"
-        classPointer = -1
         #Check if the constructor has an expression initializer list
         if node.kind == clang.cindex.CursorKind.CONSTRUCTOR:
             if has_initializer_list(node):
