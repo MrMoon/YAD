@@ -3,7 +3,7 @@ import json
 import typer
 import re
 import codeParser
-import newCommenter
+import commentController
 
 app = typer.Typer()
 
@@ -46,10 +46,24 @@ def scopeGetter(source:str, scope:str ):
 @app.command("restrict")
 def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
              rules: str  = typer.Argument(..., help="The path of the YAML file containing user requiremnets"),
-             hide:bool = typer.Argument(False, hidden=True, help="A hidden variable for developers use, used to print the names of the functions or classes that are violating YAML file")):
+             output: str  = typer.Option("#", "-o", help="If # this will make restrict print the number of violations, Input V if you want a list of violations to be printed and more information (default is #) (Takes only V or #)."),
+             hide: bool = typer.Argument(False, hidden=True, help="A hidden variable for developers use, used with checkAPI to show the names of the functions or classes that are violating the YAML file (extra)."),
+             hide2: bool = typer.Argument(False, hidden=True, help="A hidden variable for developers use, used to show that checkAPI called restrict")):
     """
     This tool will recieve a YAML file made by the user and restrict a .cpp or .h file according to that YAML file, it will return a list of findings (for YAML file explanation check GitHub).
     """
+    #Used to control the style of output
+    if output not in ["#", "V", "v"]:
+        print("Invalid -o input")
+        return False
+    
+    outputBool = False
+    if output == "#":
+        outputBool = True
+
+    #Just to increase speed of code, this is explained in prepare data in codeparser
+    if not hide2:
+        commentController.includePreparer(source)
 
     with open(rules) as file:
         yamlFile = yaml.load(file, Loader=yaml.FullLoader)
@@ -58,24 +72,23 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
 
     #Used to remove comments from file, important for all restrictors (library only one that needs to work without it)
     newSource = "commentDeletedFileForRestrictor.cpp"
-    newCommenter.delete_comments(source, newSource)
+    commentController.delete_comments(source, newSource)
 
     #Following variables are needed to print everything in a readable manner for the user and for the loop to function correctly
-    critCount = 1
     critOld = "start"
     critAns = True
     exactCount = 0
     compareCount = 0
+    parentCheck = []
+    violationCount = 0
 
     for criteria, critData in jsonData.items():
         #The following code is to print the findings of the code for each criteria in the YAML file
         if critOld != "start":
             if exactCount != 0 and compareCount != exactCount:
                 critAns = critAns & False
-            print(str(critCount) + ". " + critOld + " restriction result is " + str(critAns))
-            if hide:
-                print()
-            critCount += 1
+            if critData['restriction'].lower() == 'exactly' and not critAns and not outputBool and not hide:
+                print(critOld + " are not exactly the same.")
             critAns = True
             compareCount = 0
             exactCount = 0
@@ -86,9 +99,25 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
         if criteria == 'libraries':
             for lib in critData['names']:
                 if critData['restriction'].lower() != 'exactly':
-                    critAns = critAns & LibRestrict(source, critData['restriction'], lib, True)
+                    if not LibRestrict(source, critData['restriction'], lib, True):
+                        critAns = False
+                        violationCount += 1
+                        if not outputBool:
+                            if critData['restriction'].lower() == "forbidden":
+                                print("Violating library: " + lib)
+                            elif not hide:
+                                print("Missing library: " + lib)
+                            else:
+                                print("Extra library: " + lib)
                 else:
-                    critAns = critAns & LibRestrict(source, 'at_least', lib, True)
+                    if not LibRestrict(source, 'at_least', lib, True):
+                        critAns = False
+                        violationCount += 1
+                        if not outputBool:
+                            if not hide:
+                                print("Missing library: " + lib)
+                            else:
+                                print("Extra library: " + lib)
                     exactCount += 1
                     if exactCount == 1:
                         with open(source, 'r') as f:
@@ -100,81 +129,157 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
             keyCount = True
             for kword in critData['names']:
                 if critData['restriction'].lower() != 'exactly':
-                    critAns = critAns & WordRestrict(newSource, critData['restriction'], kword, critData['scope'], True)
+                    if not WordRestrict(newSource, critData['restriction'], kword, critData['scope'], True):
+                        critAns = False
+                        violationCount += 1
+                        if not outputBool:
+                            if critData['restriction'].lower() == "forbidden":
+                                print("Violating keyword: " + kword)
+                            elif not hide:
+                                print("Missing keyword: " + kword)
+                            else:
+                                print("Extra keyword: " + kword)
                 else:
                     if keyCount:
                         print("exactly not supported for keywords, at_least will be used instead.")
                         keyCount = False
-                    critAns = critAns & WordRestrict(newSource, 'at_least', kword, critData['scope'], True)
+                    if not WordRestrict(newSource, 'at_least', kword, critData['scope'], True):
+                        critAns = False
+                        violationCount += 1
+                        if not outputBool:
+                            if not hide:
+                                print("Missing keyword: " + kword)
+                            else:
+                                print("Extra keyword: " + kword)
 
         #Handles classes in YAML file
         elif criteria == 'classes':
             for cls in critData['names']:
                 if critData['restriction'].lower() != 'exactly':
-                    critAns = critAns & ClassRestrict(newSource, critData['restriction'], cls, critData['scope'], True)
-                    if ClassRestrict(newSource, critData['restriction'], cls, critData['scope'], True) == False and hide:
-                        print("Violation in Classes: " + cls)
+                    if not ClassRestrict(newSource, critData['restriction'], cls, critData['scope'], True):
+                        critAns = False
+                        violationCount += 1
+                        if not outputBool:
+                            if critData['restriction'].lower() == "forbidden":
+                                print("Violating class: " + cls)
+                            elif not hide:
+                                print("Missing class: " + cls)
+                            else:
+                                print("Extra class: " + cls)
                 else:
-                    critAns = critAns & ClassRestrict(newSource, 'at_least', cls, critData['scope'], True)
-                    if ClassRestrict(newSource, critData['restriction'], cls, critData['scope'], True) == False and hide:
-                        print("Violation in Classes: " + cls)
+                    if not ClassRestrict(newSource, 'at_least', cls, critData['scope'], True):
+                        critAns = False
+                        violationCount += 1
+                        if not outputBool:
+                            if not hide:
+                                print("Missing class: " + cls)
+                            else:
+                                print("Extra class: " + cls)
                     exactCount += 1
                     if exactCount == 1:
-                        if critData['scope'].lower() == "global" or critData['scope'] == None:
-                            with open(newSource, 'r') as f:
-                                data = f.read()
+                        if critData['scope'].lower() == "global" or critData['scope'] == "":
+                            data = codeParser.prepareData(newSource, False)
                         else:
-                            data = scopeGetter(newSource, critData['scope'])
-                        compareCount = len(re.findall(r"(?:(?<=\s)|(?<=^))class.*?\{(?=\s|$)", data, flags=re.MULTILINE))
+                            scopeG = scopeGetter(newSource, critData['scope'])
+                            file = open("restrictorGen.cpp", "w")
+                            file.write(scopeG)
+                            file.close()
+                            data = codeParser.prepareData("restrictorGen.cpp", False)
+                        for decl in data['nodes']:
+                            if decl['kind'] == "CLASS_DECL" and decl['start'] != decl['end']:
+                                compareCount += 1
 
         #Handles functions in YAML file
         elif criteria == 'functions':
             for func in critData['names']:
                 if critData['restriction'].lower() != 'exactly':
-                    critAns = critAns & FuncRestrict(newSource, critData['restriction'], func, critData['scope'], True)
-                    if FuncRestrict(newSource, critData['restriction'], func, critData['scope'], True) == False and hide:
-                        print("Violation in Functions: " + func)
+                    if not FuncRestrict(newSource, critData['restriction'], func, critData['scope'], True):
+                        critAns = False
+                        violationCount += 1
+                        if not outputBool:
+                            if critData['restriction'].lower() == "forbidden":
+                                print("Violating function: " + func)
+                            elif not hide:
+                                print("Missing function: " + func)
+                            else:
+                                print("Extra function: " + func)
                 else:
-                    critAns = critAns & FuncRestrict(newSource, 'at_least', func, critData['scope'], True)
-                    if FuncRestrict(newSource, critData['restriction'], func, critData['scope'], True) == False and hide:
-                        print("Violation in Functions: " + func)
+                    if not FuncRestrict(newSource, 'at_least', func, critData['scope'], True):
+                        critAns = False
+                        violationCount += 1
+                        if not outputBool:
+                            if not hide:
+                                print("Missing function: " + func)
+                            else:
+                                print("Extra function: " + func)
                     exactCount += 1
                     if exactCount == 1:
-                        if critData['scope'].lower() == "global" or critData['scope'] == None:
-                            with open(newSource, 'r') as f:
-                                data = f.read()
+                        if critData['scope'].lower() == "global" or critData['scope'] == "":
+                             data = codeParser.prepareData(newSource, False)
                         else:
-                            data = scopeGetter(newSource, critData['scope'])
-                        compareCount =  len(re.findall(r"\b[a-zA-Z_][a-zA-Z0-9_]*\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\([^)]*\)\s*\{[^{}]*\}", data, flags=re.MULTILINE))
+                            scopeG = scopeGetter(newSource, critData['scope'])
+                            file = open("restrictorGen.cpp", "w")
+                            file.write(scopeG)
+                            file.close()
+                            data = codeParser.prepareData("restrictorGen.cpp", False)
+                        for decl in data['nodes']:
+                            if decl['kind'] == "FUNCTION_DECL" and decl['start'] != decl['end']:
+                                compareCount += 1
 
         #Handles (private/public/protected) functions in YAML file
         elif criteria == 'private_functions' or criteria == 'public_functions' or criteria == 'protected_functions':
             access = criteria.split("_")[0].upper()
             for func in critData['names']:
                 if critData['restriction'].lower() != 'exactly':
-                    critAns = critAns & AccessRestrict(newSource, critData['restriction'], func, critData['scope'], access, True)
-                    if AccessRestrict(newSource, critData['restriction'], func, critData['scope'], access, True) == False and hide:
-                        print("Violation in " + access + " Functions: " + func)
+                    if not AccessRestrict(newSource, critData['restriction'], func, critData['scope'], access, True):
+                        critAns = False
+                        violationCount += 1
+                        if not outputBool:
+                            if critData['restriction'] == "forbidden":
+                                print("Violating " + access + " function: " + func)
+                            elif not hide:
+                                print("Missing " + access + " function: " + func)
+                            else:
+                                print("Extra " + access + " function: " + func)
                 else:
-                    critAns = critAns & AccessRestrict(newSource, 'at_least', func, critData['scope'], access, True)
-                    if AccessRestrict(newSource, critData['restriction'], func, critData['scope'], access, True) == False and hide:
-                        print("Violation in " + access + " Functions: " + func)
+                    if not AccessRestrict(newSource, 'at_least', func, critData['scope'], access, True):
+                        critAns = False
+                        violationCount += 1
+                        if not outputBool:
+                            if not hide:
+                                print("Missing " + access + " function: " + func)
+                            else:
+                                print("Extra " + access + " function: " + func)
                     exactCount += 1
                     if exactCount == 1:
-                        if critData['scope'].lower() == "global" or critData['scope'] == None:
-                            with open(newSource, 'r') as f:
-                                data = f.read()
+                        if critData['scope'].lower() == "global" or critData['scope'] == "":
+                             data = codeParser.prepareData(newSource, False)
                         else:
-                            data = scopeGetter(newSource, critData['scope'])
-                        compareCount =  len(re.findall(r"\b[a-zA-Z_][a-zA-Z0-9_]*\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\([^)]*\)\s*\{[^{}]*\}", data, flags=re.MULTILINE))
+                            scopeG = scopeGetter(newSource, critData['scope'])
+                            file = open("restrictorGen.cpp", "w")
+                            file.write(scopeG)
+                            file.close()
+                            data = codeParser.prepareData("restrictorGen.cpp", False)
+                        for decl in data['nodes']:
+                            if decl['kind'] == "CXX_METHOD" and decl['access_type'] == access and (decl['start'] != decl['end'] or decl['is_virtual_method'] == True):
+                                if decl['is_virtual_method'] == True:
+                                    if decl['parent_class'] in parentCheck:
+                                        compareCount -= 1
+                                    parentCheck.append(decl['parent_class'])
+                                compareCount += 1
     
 
     #To print the last criteria in the loop
     if exactCount != 0 and compareCount != exactCount:
         critAns = critAns & False
-    print(str(critCount) + ". " + critOld + " restriction result is " + str(critAns))
-    if hide:
-        print()
+    if critData['restriction'].lower() == "exactly" and not critAns and not outputBool and not hide:
+        print(critOld + " are not exactly the same.")
+    if outputBool:
+        print(violationCount)
+    
+    #Just to increase speed of code, this is explained in prepare data in codeparser
+    if not hide2:
+        commentController.includeRevert(source)
 
 
 
@@ -305,7 +410,7 @@ def ClassRestrict(source: str  = typer.Argument(..., help="The path of the .cpp 
     
     #Check if global scope or not, if not then use scopeGetter to get everything in the scope defined by the user
     if scope.lower() == "global" or scope == "":
-        data = codeParser.prepareData(source)
+        data = codeParser.prepareData(source, False)
         with open(source, 'r') as f:
             scopeG = f.read()
     else:
@@ -313,7 +418,7 @@ def ClassRestrict(source: str  = typer.Argument(..., help="The path of the .cpp 
         file = open("restrictorGen.cpp", "w")
         file.write(scopeG)
         file.close()
-        data = codeParser.prepareData("restrictorGen.cpp")
+        data = codeParser.prepareData("restrictorGen.cpp", False)
 
     prototype = prototype.strip()
     empty = []
@@ -366,7 +471,7 @@ def FuncRestrict(source: str  = typer.Argument(..., help="The path of the .cpp o
     
     #Check if global scope or not, if not then use scopeGetter to get everything in the scope defined by the user
     if scope.lower() == "global" or scope == "":
-        data = codeParser.prepareData(source)
+        data = codeParser.prepareData(source, False)
         with open(source, 'r') as f:
             scopeG = f.read()
     else:
@@ -374,7 +479,7 @@ def FuncRestrict(source: str  = typer.Argument(..., help="The path of the .cpp o
         file = open("restrictorGen.cpp", "w")
         file.write(scopeG)
         file.close()
-        data = codeParser.prepareData("restrictorGen.cpp")
+        data = codeParser.prepareData("restrictorGen.cpp", False)
     
     #Making the regex suitable to find function no matter the user input
     prototype = prototype.strip()
@@ -436,13 +541,13 @@ def AccessRestrict(source: str  = typer.Argument(..., help="The path of the .cpp
     
     #Check if global scope or not, if not then use scopeGetter to get everything in the scope defined by the user as well as preparing data for access_type search
     if scope.lower() == "global" or scope == "":
-        data = codeParser.prepareData(source)
+        data = codeParser.prepareData(source, False)
     else:
         data = scopeGetter(source, scope)
         file = open("restrictorGen.cpp", "w")
         file.write(data)
         file.close()
-        data = codeParser.prepareData("restrictorGen.cpp")
+        data = codeParser.prepareData("restrictorGen.cpp", False)
 
     #Variables used in the following if statement to find if function is private
     if len(prototype.split("virtual")) == 1 and len(prototype.split("static")) == 1:
@@ -465,10 +570,19 @@ def AccessRestrict(source: str  = typer.Argument(..., help="The path of the .cpp
 def checkAPI(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
             restriction: str = typer.Argument(..., help="The restriction type used for 2 ways of checking:\n\nat_least: Everything being checked must exist (It can be with other functions/classes).\n\nexactly: Everything being checked must only exist (It can not be with other functions/classes)."),
             compare: str = typer.Argument(..., help="The path of the .cpp or .h file the user wants the source file to be compared to."),
-            violations: str  = typer.Option(False, "-v", help="If true this will make checkAPI print the functions and classes that are causing violations (default is false).")):
+            output: str  = typer.Option("#", "-o", help="If # this will make checkAPI print the number of missing functions/classes then extra functions/classes, Input V if you want a list of violations to be printed and more information (default is #) (Takes only v or V or #)."),
+            hide:bool = typer.Argument(False, hidden=True, help="A hidden variable for developers use, used to return extra functions and classes found in the code.")):
     """
     This tool will compare two files together, the source and compare file, it will check if the function prototypes and class names match then return true or false accordingly.
     """
+    #Used to control the style of output
+    if output not in ["#", "V", "v"]:
+        print("Invalid -o input")
+        return False
+    
+    #Just to increase speed of code, this is explained in prepare data in codeparser
+    commentController.includePreparer(source)
+
     #Makes sure that restriction inputted is a viable restriction
     if restriction.lower() not in ["exactly", "forbidden", "at_least"]:
         print("Invalid Restriction Input")
@@ -480,7 +594,9 @@ def checkAPI(source: str  = typer.Argument(..., help="The path of the .cpp or .h
     allProtectedFunctions = []
     allFunctions = []
     allClasses = []
-    data = codeParser.prepareData(compare)
+    data = codeParser.prepareData(compare, False)
+    if data == 'error':
+        return False
     virtual = ""
     const = ""
     for decl in data['nodes']:
@@ -509,22 +625,21 @@ def checkAPI(source: str  = typer.Argument(..., help="The path of the .cpp or .h
             else:
                 allFunctions.append(decl['prototype'].split(' ')[0] + "*" + " " + decl['displayname' + const])
         if decl['kind'] == "CLASS_DECL":
-            allClasses.append("class " + decl['spelling'])
+            allClasses.append("class " + decl['prototype'])
     
     #Write the YAML file
     file_yaml = {'classes': {'restriction': f'{restriction}', 'scope': 'global', 'names': list(set(allClasses))}, 'functions': {'restriction': f'{restriction}', 'scope': 'global', 'names': list(set(allFunctions))}, 'public_functions': {'restriction': f'{restriction}', 'scope': 'global', 'names': list(set(allPublicFunctions))}, 'private_functions': {'restriction': f'{restriction}', 'scope': 'global', 'names': list(set(allPrivFunctions))}, 'protected_functions': {'restriction': f'{restriction}', 'scope': 'global', 'names': list(set(allProtectedFunctions))}}
     with open("checkAPI.yaml", 'w') as file:
         yaml.dump(file_yaml, file)
-
-    violations = violations.lower()
-    if violations not in ["true", "false"]:
-        print("Invalid Violations (-v) Input")
-        return False
     
-    if violations == "true":
-        Restrict(source, "checkAPI.YAML", True)
-    else:
-        Restrict(source, "checkAPI.YAML")
+    Restrict(source, "checkAPI.YAML", output, hide)
+
+    if not hide:
+        checkAPI(compare, restriction, source, output, True)
+
+    #Just to increase speed of code, this is explained in prepare data in codeparser
+    commentController.includeRevert(source)
+
 
 
 if __name__ == "__main__":
