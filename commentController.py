@@ -148,5 +148,33 @@ def CommentOutFunction(
     commentMaker(source, "function" , prototype, isolate)
 
 
+
+#This function comments out all includes and using namespaces, this is needed to make libclang work properly
+def includePreparer(input: str):
+
+    with open(input, 'r') as f:
+        source = f.read()
+
+    source = re.sub(r'^#include\s*[\s\S][<"]\S+[>"]$', r'// \g<0>', source, flags=re.MULTILINE)
+    source = re.sub(r'^\s*using\s+namespace\s+\S+;$', r'// \g<0>', source, flags=re.MULTILINE)
+
+    with open(input, 'w') as f:
+        f.write(source)
+
+
+
+#This function comments out all includes and using namespaces, this is needed to make libclang work properly
+def includeRevert(input: str):
+
+    with open(input, 'r') as f:
+        source = f.read()
+
+    source = re.sub(r'^//\s*#include\s*', r'#include ', source, flags=re.MULTILINE)
+    source = re.sub(r'^\s*//\s*using\s+namespace\s*', r'using namesapce ', source, flags=re.MULTILINE)
+
+    with open(input, 'w') as f:
+        f.write(source)
+
+
 if __name__ == "__main__":
     app()
