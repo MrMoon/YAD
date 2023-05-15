@@ -1,5 +1,6 @@
-import orjson, json
-import clang.cindex 
+import json
+import clang.cindex
+import commentController
 from pathlib import Path
 
 def findLocationFunction(data, prototype: str, source):
@@ -195,9 +196,7 @@ def has_initializer_list(cursor):
         if child.kind.is_expression():
             return True
     return False
-def prepareData ( source: str):
-
-    #comment out libraries and include in source file 
+def prepareData (source: str, hide: bool):
     
     index = clang.cindex.Index.create()
     tu = index.parse(source)
@@ -207,6 +206,14 @@ def prepareData ( source: str):
     # if len(tu.diagnostics) > 0:
     #     print("Error: " + source + " doesn't compile successfully")
     #     return ["error"]
+
+    #comment out libraries and include in source file
+    if hide:
+        commentController.includePreparer(source)
+    
+    #Call again with code without libraries and using namespace
+    index = clang.cindex.Index.create()
+    tu = index.parse(source)
     
     output = {"nodes": []}
     friendFlag = False
@@ -277,11 +284,13 @@ def prepareData ( source: str):
         }
         output["nodes"].append(node_dict)
         
-    with open('C:\\Users\\Rund\\Desktop\\Yad\\jsonfile.json', 'w') as f:
-        json.dump(output, f, indent = 4)
-        
-    with open("jsonfile.json", "rb") as f:
-        data = orjson.loads(f.read())
+    jsonFormat = json.dumps(output, indent=4)
+    data = json.loads(jsonFormat)
+
+    # Revert commenting changes done before
+    if hide:
+        commentController.includeRevert(source)
+
     return data
 
 def positions ( source: str, type: str, prototype: str, option = 0):
@@ -289,7 +298,7 @@ def positions ( source: str, type: str, prototype: str, option = 0):
     if source_path.exists() == False:
         print("Error: " + source + " doesn't exist")
         return ["error"]
-    data = prepareData(source)
+    data = prepareData(source, True)
     if data == ["error"]:
         return data
     pos =[]
