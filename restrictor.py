@@ -594,7 +594,7 @@ def checkAPI(source: str  = typer.Argument(..., help="The path of the .cpp or .h
     allProtectedFunctions = []
     allFunctions = []
     allClasses = []
-    data = codeParser.prepareData(compare, False)
+    data = codeParser.prepareData(compare, True)
     if data == 'error':
         return False
     virtual = ""
