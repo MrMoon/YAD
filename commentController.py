@@ -170,7 +170,7 @@ def includeRevert(input: str):
         source = f.read()
 
     source = re.sub(r'^//\s*#include\s*', r'#include ', source, flags=re.MULTILINE)
-    source = re.sub(r'^\s*//\s*using\s+namespace\s*', r'using namesapce ', source, flags=re.MULTILINE)
+    source = re.sub(r'^\s*//\s*using\s+namespace\s*', r'using namespace ', source, flags=re.MULTILINE)
 
     with open(input, 'w') as f:
         f.write(source)
