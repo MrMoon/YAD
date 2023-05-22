@@ -5,7 +5,7 @@ import codeParser
 app = typer.Typer()
 
 #This function is responsible for converting classes and functions to comments in a .cpp or .h file
-def commentMaker(source: str, type: str, name: str, isolate =0, option=0 ):
+def commentMaker(source: str, type: str, name: str, isolate =0, option=0, output = ""):
 
     #Find where the classes or functions start
     position = codeParser.positions(source, type , name, option)
@@ -27,8 +27,12 @@ def commentMaker(source: str, type: str, name: str, isolate =0, option=0 ):
     
     
     #Write the modified code into the file.
-    with open(source, 'w') as f:
-        f.writelines(lines)
+    if output != "":
+        with open(output, 'w') as f:
+            f.writelines(lines)
+    else:
+        for line in lines:
+            print(line)
 
 
 
@@ -129,10 +133,22 @@ def extract_header(input: str  = typer.Argument(..., help="The path of the .cpp 
 def CommentOutClass(
     source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants comment out class to work on."),
     prototype: str  = typer.Argument(..., help="The class the user wants to check (Must input like this: \"class name\")."),
-    option1: str  = typer.Option("True", "-all", help="If true this will isolate the class with all its children classes"),
-    isolate =0 ):   
+    all: str  = typer.Option("true", "-all", help="If true this will isolate the class with all its children classes"),
+    isolate: int = typer.Argument(0, hidden=True, help="A hidden variable for developers' use, used to show that function was called by isolator."),
+    output: str  = typer.Option("", "-o", help="The path of the .cpp or .h file the user wants the output to be saved in (Default is printing on the terminal).")):
+    """
+    This tool will comment out a class implementation from a C++ file using a class prototype (equivalent to deleting the class).
+    """
+    if all.lower() not in ["true","false"]:
+        print("Invalid input for -all")
+        return False
+    
     type = prototype.split(" ")[0]
-    commentMaker(source, type , prototype, isolate, option1)
+    option = 1
+    if all.lower() == "true":
+        option = 0
+
+    commentMaker(source, type , prototype, isolate, option, output)
 
 
 
@@ -141,11 +157,12 @@ def CommentOutClass(
 def CommentOutFunction(
     source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants comment out class to work on."),
     prototype: str  = typer.Argument(..., help="The function the user wants to check (Must input like this: \"int functionName(int, int)\"."),
-    isolate =0 ):
+    isolate: int = typer.Argument(0, hidden=True, help="A hidden variable for developers' use, used to show that function was called by isolator."),
+    output: str  = typer.Option("", "-o", help="The path of the .cpp or .h file the user wants the output to be saved in (Default is printing on the terminal).")):
     """
     This tool will comment out a function implementation from a C++ file using a function prototype (equivalent to deleting the function).
     """
-    commentMaker(source, "function" , prototype, isolate)
+    commentMaker(source, "function" , prototype, isolate, 0, output)
 
 
 
@@ -174,6 +191,7 @@ def includeRevert(input: str):
 
     with open(input, 'w') as f:
         f.write(source)
+
 
 
 if __name__ == "__main__":
