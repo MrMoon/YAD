@@ -2,13 +2,16 @@ import typer
 import codeParser
 import commentController
 
-
 app = typer.Typer()
 
+
+
 @app.command("isolateFunction")
-def isolateFunction(source: str  = typer.Argument(...), destination: str  = typer.Argument(...), prototype: str  = typer.Argument(...)):
+def isolateFunction(source: str  = typer.Argument(..., help="The source code that the function will be isolated from (.cpp/.h)"),
+                    destination: str  = typer.Argument(..., help="The destination code where the function will be embedded or replaced (.cpp/.h)"),
+                    prototype: str  = typer.Argument(..., help="The function prototype: return-type function-name parameters-types. In the case of member functions return-type class-name::function-name parameters-types. Example: int test(int, string). Must put them in quotations when using CLI.")):
     """
-    This tool will isolate out a function 
+    This tool will isolate out a function, the function will be taken from source and replace the one in destination or add one.
     """
     
     findFunction = codeParser.positions(source,"function", prototype)
@@ -41,7 +44,7 @@ def isolateFunction(source: str  = typer.Argument(...), destination: str  = type
         forward_implementation = forward_implementation.split("::")[0] + forward_implementation.split("::")[1]
     
     #commenting out the function in destination file 
-    commentController.CommentOutFunction(destination, prototype, 1)
+    commentController.CommentOutFunction(destination, prototype, 1, destination)
     
     #case: forward declaration or memebr functions implemented outside a class
     i=0
@@ -72,17 +75,22 @@ def isolateFunction(source: str  = typer.Argument(...), destination: str  = type
     with open(destination, "w") as destination_file:
         destination_file.writelines(lines)
 
+
+
 @app.command("isolateClass")
 def isolateClass(
-    source: str  = typer.Argument(...), 
-    destination: str  = typer.Argument(...), 
-    prototype: str  = typer.Argument(...),
-    option1: str  = typer.Option("False", "-all", help="If true this will isolate the class with all its children classes") ):
+    source: str  = typer.Argument(..., help="The source code that the function will be isolated from (.cpp/.h)"), 
+    destination: str  = typer.Argument(..., help="The destination code where the function will be embedded or replaced (.cpp/.h)"), 
+    prototype: str  = typer.Argument(..., help="The class prototype: class class-name. Example: class test. Must put them in quotations when using CLI."),
+    all: str  = typer.Option("false", "-all", help="If true this will isolate the class with all its children classes, only takes true or false, default value is false.")):
+    """
+    This tool will isolate out a class, the class will be taken from source and replace the one in destination or add one.
+    """
     option =0
-    if option1.lower() == "false":
+    if all.lower() == "false":
         option = 1
     type = prototype.split(" ")[0]
-    position = codeParser.positions(source, type, prototype,option)
+    position = codeParser.positions(source, type, prototype, option)
     
     if position == ["error"]:
         return
@@ -111,7 +119,7 @@ def isolateClass(
     class_position = codeParser.positions(destination, type, prototype, 1)
     if class_position == ["error"]:
         return
-    commentController.CommentOutClass(destination, prototype, 1)
+    commentController.CommentOutClass(destination, prototype, all, 1, destination)
     
     with open(destination, "r") as destination_file:
         lines = destination_file.readlines()
@@ -125,9 +133,7 @@ def isolateClass(
     with open(destination, "w") as destination_file:
         destination_file.writelines(lines)
 
-@app.command("trythis")
-def trythis():
-    codeParser.positions("testfiles\\test.cpp", "class", "class Animal")
+
 
 if __name__ == "__main__":
     app()
