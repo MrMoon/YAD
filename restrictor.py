@@ -45,7 +45,7 @@ def scopeGetter(source:str, scope:str ):
 #Function that uses all other restriction functions that are below it, it recieves a YAML file which lets it know which functions to run
 @app.command("restrict")
 def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
-             rules: str  = typer.Argument(..., help="The path of the YAML file containing user requiremnets"),
+             rules: str  = typer.Argument(..., help="The path of the YAML file containing user requirements."),
              output: str  = typer.Option("#", "-o", help="If # this will make restrict print the number of violations, Input V if you want a list of violations to be printed and more information (default is #) (Takes only V or #)."),
              hide: bool = typer.Argument(False, hidden=True, help="A hidden variable for developers use, used with checkAPI to show the names of the functions or classes that are violating the YAML file (extra)."),
              hide2: bool = typer.Argument(False, hidden=True, help="A hidden variable for developers use, used to show that checkAPI called restrict")):
@@ -157,6 +157,8 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
             for cls in critData['names']:
                 if critData['restriction'].lower() != 'exactly':
                     if not ClassRestrict(newSource, critData['restriction'], cls, critData['scope'], True):
+                        if len(cls.split("::")) != 1:
+                            continue
                         critAns = False
                         violationCount += 1
                         if not outputBool:
@@ -167,6 +169,8 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
                             else:
                                 print("Extra class: " + cls)
                 else:
+                    if len(cls.split("::")) != 1:
+                            continue
                     if not ClassRestrict(newSource, 'at_least', cls, critData['scope'], True):
                         critAns = False
                         violationCount += 1
@@ -287,7 +291,7 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
 @app.command("library")
 def LibRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
                  restriction: str = typer.Argument(..., help="The restriction type used for 3 ways of checking:\n\nat_least: The library being checked must exist (It can be with other libraries).\n\nexactly: The library being checked must only exist (It can not be with other libraries).\n\nforbidden: The library being checked must not exist."),
-                 lib: str = typer.Argument(..., help="The name of the library the user wants to check."),
+                 lib: str = typer.Argument(..., help="The name of the library the user wants to check (only input the name of the library without #include)."),
                  hide:bool = typer.Argument(False, hidden=True, help="A hidden variable for developers use, used to return boolean")):
     """
     This tool will check if a certain library inputted by the user follows as certain restriction type of (at_least/exactly/forbidden) in a .cpp or .h file also inputted by the user.
@@ -350,9 +354,9 @@ def LibRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or
 #Function to restrict a single keyword, no need for the YAML file, further explanation available exactly below function definition.
 @app.command("keyword")
 def WordRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
-                 restriction: str = typer.Argument(..., help="The restriction type used for 2 ways of checking:\n\nat_least: The keyword being checked must exist (It can be with other keywords).\n\nforbidden: The keyword being checked must not exist.\n\nexactly not available for keywords, will work as at_least"),
-                 keyword: str = typer.Argument(..., help="The keyword the user wants to check."),
-                 scope: str = typer.Argument(..., help="The scope the user wants to check inside (Function or Class)."),
+                 restriction: str = typer.Argument(..., help="The restriction type used for 2 ways of checking:\n\nat_least: The keyword being checked must exist (It can be with other keywords).\n\nforbidden: The keyword being checked must not exist.\n\nexactly not available for keywords, will work as at_least."),
+                 keyword: str = typer.Argument(..., help="The keyword the user wants to check (This function matches using regex, function prototypes don't work here, must input exactly what you want to match)."),
+                 scope: str = typer.Argument(..., help="The scope the user wants to check inside (Function or Class, use their prototypes)."),
                  hide:bool = typer.Argument(False, hidden=True, help="A hidden variable for developers use, used to return boolean")):
     """
     This tool will check if a certain keyword inputted by the user follows as certain restriction type of (at_least/exactly/forbidden) in a .cpp or .h file also inputted by the user.
@@ -397,7 +401,7 @@ def WordRestrict(source: str  = typer.Argument(..., help="The path of the .cpp o
 def ClassRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
                  restriction: str = typer.Argument(..., help="The restriction type used for 3 ways of checking:\n\nat_least: The class being checked must exist (It can be with other classes).\n\nexactly: The class being checked must only exist (It can not be with other classes).\n\nforbidden: The class being checked must not exist."),
                  prototype: str = typer.Argument(..., help="The class the user wants to check (Must input like this: \"class name\")."),
-                 scope: str = typer.Argument(..., help="The scope the user wants to check inside (Function or Class)."),
+                 scope: str = typer.Argument(..., help="The scope the user wants to check inside (Function or Class, input their prototypes)."),
                  hide:bool = typer.Argument(False, hidden=True, help="A hidden variable for developers use, used to return boolean")):
     """
     This tool will check if a certain class inputted by the user follows as certain restriction type of (at_least/exactly/forbidden) in a .cpp or .h file also inputted by the user.
@@ -458,7 +462,7 @@ def ClassRestrict(source: str  = typer.Argument(..., help="The path of the .cpp 
 def FuncRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
                  restriction: str = typer.Argument(..., help="The restriction type used for 3 ways of checking:\n\nat_least: The function being checked must exist (It can be with other functions).\n\nexactly: The function being checked must only exist (It can not be with other functions).\n\nforbidden: The function being checked must not exist."),
                  prototype: str = typer.Argument(..., help="The function the user wants to check (Must input like this: \"int functionName(int, int)\"."),
-                 scope: str = typer.Argument(..., help="The scope the user wants to check inside (Function or Class)."),
+                 scope: str = typer.Argument(..., help="The scope the user wants to check inside (Function or Class, input their prototypes)."),
                  hide:bool = typer.Argument(False, hidden=True, help="A hidden variable for developers use, used to return boolean")):
     """
     This tool will check if a certain function inputted by the user follows as certain restriction type of (at_least/exactly/forbidden) in a .cpp or .h file also inputted by the user.
@@ -528,7 +532,7 @@ def FuncRestrict(source: str  = typer.Argument(..., help="The path of the .cpp o
 def AccessRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
                  restriction: str = typer.Argument(..., help="The restriction type used for 3 ways of checking:\n\nat_least: The function being checked must exist (It can be with other functions).\n\nexactly: The function being checked must only exist (It can not be with other functions).\n\nforbidden: The function being checked must not exist."),
                  prototype: str = typer.Argument(..., help="The function the user wants to check (Must input like this: \"int functionName(int, int)\" or \"int functionName(int x,int y)\")."),
-                 scope: str = typer.Argument(..., help="The scope the user wants to check inside (Function or Class)."),
+                 scope: str = typer.Argument(..., help="The scope the user wants to check inside (Function or Class, input their prototypes)."),
                  type: str = typer.Argument(..., help="The access type the user wants to check for (private/public/protected)."),
                  hide:bool = typer.Argument(False, hidden=True, help="A hidden variable for developers use, used to return boolean")):
     """
@@ -566,7 +570,6 @@ def AccessRestrict(source: str  = typer.Argument(..., help="The path of the .cpp
 
 
 #Function to restrict a single (private/public/protected) function, no need for the YAML file, further explanation available exactly below function definition.
-@app.command("checkAPI")
 def checkAPI(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
             restriction: str = typer.Argument(..., help="The restriction type used for 2 ways of checking:\n\nat_least: Everything being checked must exist (It can be with other functions/classes).\n\nexactly: Everything being checked must only exist (It can not be with other functions/classes)."),
             compare: str = typer.Argument(..., help="The path of the .cpp or .h file the user wants the source file to be compared to."),
@@ -582,7 +585,7 @@ def checkAPI(source: str  = typer.Argument(..., help="The path of the .cpp or .h
     
     #Just to increase speed of code, this is explained in prepare data in codeparser
     commentController.includePreparer(source)
-
+    
     #Makes sure that restriction inputted is a viable restriction
     if restriction.lower() not in ["exactly", "forbidden", "at_least"]:
         print("Invalid Restriction Input")
