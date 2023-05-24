@@ -183,12 +183,16 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
                     if exactCount == 1:
                         if critData['scope'].lower() == "global" or critData['scope'] == "":
                             data = codeParser.prepareData(newSource, False)
+                            if data == ["error"]:
+                                return False
                         else:
                             scopeG = scopeGetter(newSource, critData['scope'])
                             file = open("restrictorGen.cpp", "w")
                             file.write(scopeG)
                             file.close()
                             data = codeParser.prepareData("restrictorGen.cpp", False)
+                            if data == ["error"]:
+                                return False
                         for decl in data['nodes']:
                             if decl['kind'] == "CLASS_DECL" and decl['start'] != decl['end']:
                                 compareCount += 1
@@ -220,12 +224,16 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
                     if exactCount == 1:
                         if critData['scope'].lower() == "global" or critData['scope'] == "":
                              data = codeParser.prepareData(newSource, False)
+                             if data == ["error"]:
+                                return False
                         else:
                             scopeG = scopeGetter(newSource, critData['scope'])
                             file = open("restrictorGen.cpp", "w")
                             file.write(scopeG)
                             file.close()
                             data = codeParser.prepareData("restrictorGen.cpp", False)
+                            if data == ["error"]:
+                                return False
                         for decl in data['nodes']:
                             if decl['kind'] == "FUNCTION_DECL" and decl['start'] != decl['end']:
                                 compareCount += 1
@@ -258,12 +266,16 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
                     if exactCount == 1:
                         if critData['scope'].lower() == "global" or critData['scope'] == "":
                              data = codeParser.prepareData(newSource, False)
+                             if data == ["error"]:
+                                return False
                         else:
                             scopeG = scopeGetter(newSource, critData['scope'])
                             file = open("restrictorGen.cpp", "w")
                             file.write(scopeG)
                             file.close()
                             data = codeParser.prepareData("restrictorGen.cpp", False)
+                            if data == ["error"]:
+                                return False
                         for decl in data['nodes']:
                             if decl['kind'] == "CXX_METHOD" and decl['access_type'] == access and (decl['start'] != decl['end'] or decl['is_virtual_method'] == True):
                                 if decl['is_virtual_method'] == True:
@@ -415,6 +427,8 @@ def ClassRestrict(source: str  = typer.Argument(..., help="The path of the .cpp 
     #Check if global scope or not, if not then use scopeGetter to get everything in the scope defined by the user
     if scope.lower() == "global" or scope == "":
         data = codeParser.prepareData(source, False)
+        if data == ["error"]:
+            return False
         with open(source, 'r') as f:
             scopeG = f.read()
     else:
@@ -423,6 +437,8 @@ def ClassRestrict(source: str  = typer.Argument(..., help="The path of the .cpp 
         file.write(scopeG)
         file.close()
         data = codeParser.prepareData("restrictorGen.cpp", False)
+        if data == ["error"]:
+            return False
 
     prototype = prototype.strip()
     empty = []
@@ -476,6 +492,8 @@ def FuncRestrict(source: str  = typer.Argument(..., help="The path of the .cpp o
     #Check if global scope or not, if not then use scopeGetter to get everything in the scope defined by the user
     if scope.lower() == "global" or scope == "":
         data = codeParser.prepareData(source, False)
+        if data == ["error"]:
+            return False
         with open(source, 'r') as f:
             scopeG = f.read()
     else:
@@ -484,6 +502,8 @@ def FuncRestrict(source: str  = typer.Argument(..., help="The path of the .cpp o
         file.write(scopeG)
         file.close()
         data = codeParser.prepareData("restrictorGen.cpp", False)
+        if data == ["error"]:
+            return False
     
     #Making the regex suitable to find function no matter the user input
     prototype = prototype.strip()
@@ -546,12 +566,16 @@ def AccessRestrict(source: str  = typer.Argument(..., help="The path of the .cpp
     #Check if global scope or not, if not then use scopeGetter to get everything in the scope defined by the user as well as preparing data for access_type search
     if scope.lower() == "global" or scope == "":
         data = codeParser.prepareData(source, False)
+        if data == ["error"]:
+            return False
     else:
         data = scopeGetter(source, scope)
         file = open("restrictorGen.cpp", "w")
         file.write(data)
         file.close()
         data = codeParser.prepareData("restrictorGen.cpp", False)
+        if data == ["error"]:
+            return False
 
     #Variables used in the following if statement to find if function is private
     if len(prototype.split("virtual")) == 1 and len(prototype.split("static")) == 1:
@@ -598,6 +622,8 @@ def checkAPI(source: str  = typer.Argument(..., help="The path of the .cpp or .h
     allFunctions = []
     allClasses = []
     data = codeParser.prepareData(compare, True)
+    if data == ["error"]:
+        return False
     if data == 'error':
         return False
     virtual = ""
@@ -621,7 +647,7 @@ def checkAPI(source: str  = typer.Argument(..., help="The path of the .cpp or .h
             elif decl['access_type'] == 'PROTECTED':
                 allProtectedFunctions.append(virtual + decl['prototype'].split(' ')[0] + " " + decl['parent_class'].split(' ')[1] + "::" + decl['displayname'] + const )
         elif decl['kind'] == "FUNCTION_DECL":
-            if len(decl['prototype'].split('(')[0].split('**')) == 1 and len(decl['prototype'].split('(')[0].split('*')) == 1:
+            if len(decl['prototype'].split(' ')[0].split('**')) == 1 and len(decl['prototype'].split(' ')[0].split('*')) == 1:
                 allFunctions.append(decl['prototype'].split(' ')[0] + " " + decl['displayname'] + const)
             elif len(decl['prototype'].split('**')) > 1:
                 allFunctions.append(decl['prototype'].split('**')[0] + "**" + " " + decl['displayname'] + const)
