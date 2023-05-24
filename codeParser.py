@@ -126,7 +126,7 @@ def findLocationFunction(data, prototype: str, source):
     return pos
 
 def findLocationClass(data, prototype: str, source, type: str, iteration = 0):
-    #classes list stores all classes that inherits from\friend with main class in order to parse their member functions and nested classes   
+    #classes list stores all classes that inherits from\friend with main class in order to parse their member functions and nested classes  
     classes =  [prototype]
     pos=[]
     for class_i in classes:
@@ -203,9 +203,9 @@ def prepareData (source: str, hide: bool):
     
     #check if source code compiles
     # print(len(tu.diagnostics))
-    # if len(tu.diagnostics) > 0:
-    #     print("Error: " + source + " doesn't compile successfully")
-    #     return ["error"]
+    if len(tu.diagnostics) > 0:
+        print("Error: " + source + " doesn't compile successfully")
+        return ["error"]
 
     #comment out libraries and include in source file
     if hide:
@@ -218,7 +218,7 @@ def prepareData (source: str, hide: bool):
     output = {"nodes": []}
     friendFlag = False
     classPointer = -1
-    for node in tu.cursor.walk_preorder():   
+    for node in tu.cursor.walk_preorder():
         access_type =""
         parent_class = ""
         initializer_list = "false"
@@ -260,7 +260,6 @@ def prepareData (source: str, hide: bool):
             friendFlag = False
 
         classPointer = classPointer - 1
-            
         node_dict = {
             "kind": str(node.kind.name),
             "spelling": node.spelling,
@@ -283,7 +282,7 @@ def prepareData (source: str, hide: bool):
             "initializer_list" : initializer_list,
         }
         output["nodes"].append(node_dict)
-        
+    
     jsonFormat = json.dumps(output, indent=4)
     data = json.loads(jsonFormat)
 
