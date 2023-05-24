@@ -621,7 +621,7 @@ def checkAPI(source: str  = typer.Argument(..., help="The path of the .cpp or .h
             elif decl['access_type'] == 'PROTECTED':
                 allProtectedFunctions.append(virtual + decl['prototype'].split(' ')[0] + " " + decl['parent_class'].split(' ')[1] + "::" + decl['displayname'] + const )
         elif decl['kind'] == "FUNCTION_DECL":
-            if len(decl['prototype'].split('**')) == 1 and len(decl['prototype'].split('*')):
+            if len(decl['prototype'].split('(')[0].split('**')) == 1 and len(decl['prototype'].split('(')[0].split('*')) == 1:
                 allFunctions.append(decl['prototype'].split(' ')[0] + " " + decl['displayname'] + const)
             elif len(decl['prototype'].split('**')) > 1:
                 allFunctions.append(decl['prototype'].split('**')[0] + "**" + " " + decl['displayname'] + const)
