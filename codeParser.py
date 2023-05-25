@@ -146,6 +146,17 @@ def findLocationClass(data, prototype: str, source, type: str, iteration = 0):
                     class_end = end
                     pos+=[start, end, type, ""]
                     flag =1
+                elif item['kind'] == "CLASS_TEMPLATE":
+                    start = item['start']
+                    # in-case the template definition was on the previous line
+                    if item['col'] <= 12:
+                        start -= 1
+                    end = item['end']
+                    class_start = start 
+                    class_end = end
+                    pos+=[start, end, type, ""]
+                    flag =1
+                
             if flag  == 0 : 
                 i = i+1
                 continue
@@ -202,7 +213,6 @@ def prepareData (source: str, hide: bool):
     tu = index.parse(source)
     
     #check if source code compiles
-    # print(len(tu.diagnostics))
     if len(tu.diagnostics) > 0:
         print("Error: " + source + " doesn't compile successfully")
         return ["error"]
@@ -268,6 +278,7 @@ def prepareData (source: str, hide: bool):
             "type": str(node.type),
             "start": int(node.location.line),
             "end": int(node.extent.end.line),
+            "col": int(node.location.column),
             "mangled_name": node.mangled_name,
             "is_const_method": node.is_const_method(),
             "is_static_method": node.is_static_method(),
@@ -289,7 +300,6 @@ def prepareData (source: str, hide: bool):
     # Revert commenting changes done before
     if hide:
         commentController.includeRevert(source)
-
     return data
 
 def positions ( source: str, type: str, prototype: str, option = 0):

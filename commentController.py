@@ -10,7 +10,7 @@ def commentMaker(source: str, type: str, name: str, isolate =0, option=0, output
     #Find where the classes or functions start
     position = codeParser.positions(source, type , name, option)
     if position == "Null" or position == []:
-        if isolate == "0":
+        if isolate == 0:
             print("NOT FOUND")
         return
     
