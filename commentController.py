@@ -9,7 +9,9 @@ def commentMaker(source: str, type: str, name: str, isolate =0, option=0, output
 
     #Find where the classes or functions start
     position = codeParser.positions(source, type , name, option)
-    if position == "Null" or position == []:
+    if position == ["error"]:
+        return
+    if position == []:
         if isolate == 0:
             print("NOT FOUND")
         return
@@ -38,7 +40,7 @@ def commentMaker(source: str, type: str, name: str, isolate =0, option=0, output
 
 #This function is responsible for removing all comments from a .cpp or .h file
 @app.command("delete")
-def delete_comments(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants delete comments to work on."),
+def deleteComments(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants delete comments to work on."),
                     output: str  = typer.Option("", "-o", help="The path of the .cpp or .h file the user wants the output to be saved in (Default is printing on the terminal).")):
     """
     This tool will delete all the comments from a .cpp or .h file and output the source code into the file of your choosing.
@@ -60,7 +62,7 @@ def delete_comments(source: str  = typer.Argument(..., help="The path of the .cp
 
 #This function is responsible for extracting all comments from a .cpp or .h file into a file or to print on the terminal
 @app.command("extract")
-def extract_comments(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants extracts comments to work on."),
+def extractComments(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants extracts comments to work on."),
                     output: str  = typer.Option("", "-o", help="The path of the .cpp or .h file the user wants the output to be saved in (Default is printing on the terminal).")):
     """
     This tool will extract all the comments from a C++ file and output the comments into the file of your choosing.
@@ -89,7 +91,7 @@ def extract_comments(source: str  = typer.Argument(..., help="The path of the .c
 
 #This function is responsible for extracting all header comments from a .cpp or .h file into a file or to print on the terminal
 @app.command("header")
-def extract_header(input: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants extracts header comments to work on."),
+def extractHeader(input: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants extracts header comments to work on."),
                    output: str  = typer.Option("", "-o", help="The path of the .cpp or .h file the user wants the output to be saved in (Default is printing on the terminal).")):
     """
     This tool will extract all header comments from a C++ file and output the comments into the file of your choosing.

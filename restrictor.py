@@ -16,6 +16,11 @@ def scopeGetter(source:str, scope:str ):
         
         #Find where function or class is
         pos = codeParser.positions(source, type, scope)
+        if pos == ["error"]:
+            return
+        if pos == []:
+            print("Warning: " + type + "doesn't exist in " + source +" file")
+            return
         searchPos = []
         count = 0
         for p in pos:
@@ -44,7 +49,7 @@ def scopeGetter(source:str, scope:str ):
 
 #Function that uses all other restriction functions that are below it, it recieves a YAML file which lets it know which functions to run
 @app.command("restrict")
-def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
+def restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
              rules: str  = typer.Argument(..., help="The path of the YAML file containing user requirements."),
              output: str  = typer.Option("#", "-o", help="If # this will make restrict print the number of violations, Input V if you want a list of violations to be printed and more information (default is #) (Takes only V or #)."),
              hide: bool = typer.Argument(False, hidden=True, help="A hidden variable for developers use, used with checkAPI to show the names of the functions or classes that are violating the YAML file (extra)."),
@@ -99,7 +104,7 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
         if criteria == 'libraries':
             for lib in critData['names']:
                 if critData['restriction'].lower() != 'exactly':
-                    if not LibRestrict(source, critData['restriction'], lib, True):
+                    if not libRestrict(source, critData['restriction'], lib, True):
                         critAns = False
                         violationCount += 1
                         if not outputBool:
@@ -110,7 +115,7 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
                             else:
                                 print("Extra library: " + lib)
                 else:
-                    if not LibRestrict(source, 'at_least', lib, True):
+                    if not libRestrict(source, 'at_least', lib, True):
                         critAns = False
                         violationCount += 1
                         if not outputBool:
@@ -129,7 +134,7 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
             keyCount = True
             for kword in critData['names']:
                 if critData['restriction'].lower() != 'exactly':
-                    if not WordRestrict(newSource, critData['restriction'], kword, critData['scope'], True):
+                    if not wordRestrict(newSource, critData['restriction'], kword, critData['scope'], True):
                         critAns = False
                         violationCount += 1
                         if not outputBool:
@@ -143,7 +148,7 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
                     if keyCount:
                         print("exactly not supported for keywords, at_least will be used instead.")
                         keyCount = False
-                    if not WordRestrict(newSource, 'at_least', kword, critData['scope'], True):
+                    if not wordRestrict(newSource, 'at_least', kword, critData['scope'], True):
                         critAns = False
                         violationCount += 1
                         if not outputBool:
@@ -156,7 +161,7 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
         elif criteria == 'classes':
             for cls in critData['names']:
                 if critData['restriction'].lower() != 'exactly':
-                    if not ClassRestrict(newSource, critData['restriction'], cls, critData['scope'], True):
+                    if not classRestrict(newSource, critData['restriction'], cls, critData['scope'], True):
                         if len(cls.split("::")) != 1:
                             continue
                         critAns = False
@@ -171,7 +176,7 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
                 else:
                     if len(cls.split("::")) != 1:
                             continue
-                    if not ClassRestrict(newSource, 'at_least', cls, critData['scope'], True):
+                    if not classRestrict(newSource, 'at_least', cls, critData['scope'], True):
                         critAns = False
                         violationCount += 1
                         if not outputBool:
@@ -201,7 +206,7 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
         elif criteria == 'functions':
             for func in critData['names']:
                 if critData['restriction'].lower() != 'exactly':
-                    if not FuncRestrict(newSource, critData['restriction'], func, critData['scope'], True):
+                    if not funcRestrict(newSource, critData['restriction'], func, critData['scope'], True):
                         critAns = False
                         violationCount += 1
                         if not outputBool:
@@ -212,7 +217,7 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
                             else:
                                 print("Extra function: " + func)
                 else:
-                    if not FuncRestrict(newSource, 'at_least', func, critData['scope'], True):
+                    if not funcRestrict(newSource, 'at_least', func, critData['scope'], True):
                         critAns = False
                         violationCount += 1
                         if not outputBool:
@@ -243,7 +248,7 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
             access = criteria.split("_")[0].upper()
             for func in critData['names']:
                 if critData['restriction'].lower() != 'exactly':
-                    if not AccessRestrict(newSource, critData['restriction'], func, critData['scope'], access, True):
+                    if not accessRestrict(newSource, critData['restriction'], func, critData['scope'], access, True):
                         critAns = False
                         violationCount += 1
                         if not outputBool:
@@ -254,7 +259,7 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
                             else:
                                 print("Extra " + access + " function: " + func)
                 else:
-                    if not AccessRestrict(newSource, 'at_least', func, critData['scope'], access, True):
+                    if not accessRestrict(newSource, 'at_least', func, critData['scope'], access, True):
                         critAns = False
                         violationCount += 1
                         if not outputBool:
@@ -301,7 +306,7 @@ def Restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
 
 #Function to restrict a single library, no need for the YAML file, further explanation available exactly below function definition
 @app.command("library")
-def LibRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
+def libRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
                  restriction: str = typer.Argument(..., help="The restriction type used for 3 ways of checking:\n\nat_least: The library being checked must exist (It can be with other libraries).\n\nexactly: The library being checked must only exist (It can not be with other libraries).\n\nforbidden: The library being checked must not exist."),
                  lib: str = typer.Argument(..., help="The name of the library the user wants to check (only input the name of the library without #include)."),
                  hide:bool = typer.Argument(False, hidden=True, help="A hidden variable for developers use, used to return boolean")):
@@ -365,7 +370,7 @@ def LibRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or
 
 #Function to restrict a single keyword, no need for the YAML file, further explanation available exactly below function definition.
 @app.command("keyword")
-def WordRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
+def wordRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
                  restriction: str = typer.Argument(..., help="The restriction type used for 2 ways of checking:\n\nat_least: The keyword being checked must exist (It can be with other keywords).\n\nforbidden: The keyword being checked must not exist.\n\nexactly not available for keywords, will work as at_least."),
                  keyword: str = typer.Argument(..., help="The keyword the user wants to check (This function matches using regex, function prototypes don't work here, must input exactly what you want to match)."),
                  scope: str = typer.Argument(..., help="The scope the user wants to check inside (Function or Class, use their prototypes)."),
@@ -410,7 +415,7 @@ def WordRestrict(source: str  = typer.Argument(..., help="The path of the .cpp o
 
 #Function to restrict a single class, no need for the YAML file, further explanation available exactly below function definition.
 @app.command("class")
-def ClassRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
+def classRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
                  restriction: str = typer.Argument(..., help="The restriction type used for 3 ways of checking:\n\nat_least: The class being checked must exist (It can be with other classes).\n\nexactly: The class being checked must only exist (It can not be with other classes).\n\nforbidden: The class being checked must not exist."),
                  prototype: str = typer.Argument(..., help="The class the user wants to check (Must input like this: \"class name\")."),
                  scope: str = typer.Argument(..., help="The scope the user wants to check inside (Function or Class, input their prototypes)."),
@@ -475,7 +480,7 @@ def ClassRestrict(source: str  = typer.Argument(..., help="The path of the .cpp 
 
 #Function to restrict a single function, no need for the YAML file, further explanation available exactly below function definition.
 @app.command("function")
-def FuncRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
+def funcRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
                  restriction: str = typer.Argument(..., help="The restriction type used for 3 ways of checking:\n\nat_least: The function being checked must exist (It can be with other functions).\n\nexactly: The function being checked must only exist (It can not be with other functions).\n\nforbidden: The function being checked must not exist."),
                  prototype: str = typer.Argument(..., help="The function the user wants to check (Must input like this: \"int functionName(int, int)\"."),
                  scope: str = typer.Argument(..., help="The scope the user wants to check inside (Function or Class, input their prototypes)."),
@@ -549,7 +554,7 @@ def FuncRestrict(source: str  = typer.Argument(..., help="The path of the .cpp o
 
 #Function to restrict a single (private/public/protected) function, no need for the YAML file, further explanation available exactly below function definition.
 @app.command("access")
-def AccessRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
+def accessRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
                  restriction: str = typer.Argument(..., help="The restriction type used for 3 ways of checking:\n\nat_least: The function being checked must exist (It can be with other functions).\n\nexactly: The function being checked must only exist (It can not be with other functions).\n\nforbidden: The function being checked must not exist."),
                  prototype: str = typer.Argument(..., help="The function the user wants to check (Must input like this: \"int functionName(int, int)\" or \"int functionName(int x,int y)\")."),
                  scope: str = typer.Argument(..., help="The scope the user wants to check inside (Function or Class, input their prototypes)."),
@@ -586,7 +591,7 @@ def AccessRestrict(source: str  = typer.Argument(..., help="The path of the .cpp
     
     for decl in data['nodes']:
         if decl['kind'] == "CXX_METHOD" and decl['spelling'] == spelling and decl['prototype'] == proto and decl['access_type'] == type.upper():
-            return FuncRestrict(source, restriction, prototype, scope, hide)
+            return funcRestrict(source, restriction, prototype, scope, hide)
     if not hide:
         print("False")
     return False
@@ -661,7 +666,7 @@ def checkAPI(source: str  = typer.Argument(..., help="The path of the .cpp or .h
     with open("checkAPI.yaml", 'w') as file:
         yaml.dump(file_yaml, file)
     
-    Restrict(source, "checkAPI.YAML", output, hide)
+    restrict(source, "checkAPI.YAML", output, hide)
 
     if not hide:
         checkAPI(compare, restriction, source, output, True)

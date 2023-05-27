@@ -202,7 +202,7 @@ def findLocationClass(data, prototype: str, source, type: str, iteration = 0):
     return pos
  
 #find if a constructor has expression initializer list
-def has_initializer_list(cursor):
+def hasInitializerList(cursor):
     for child in cursor.get_children():
         if child.kind.is_expression():
             return True
@@ -234,7 +234,7 @@ def prepareData (source: str, hide: bool):
         initializer_list = "false"
         #Check if the constructor has an expression initializer list
         if node.kind == clang.cindex.CursorKind.CONSTRUCTOR:
-            if has_initializer_list(node):
+            if hasInitializerList(node):
                 initializer_list = "true"
                 
         #Save access type of member functions, anything else will have value "invalid"              
@@ -307,6 +307,18 @@ def positions ( source: str, type: str, prototype: str, option = 0):
     if source_path.exists() == False:
         print("Error: " + source + " doesn't exist")
         return ["error"]
+    
+    #checking if its .h file and converting it to .cpp, due to libclang capabilities 
+    file_extension = source_path.suffix
+    if file_extension == ".h":
+        file_name = source_path.stem
+        with open(source, 'r') as source:
+            content = source.read()
+        destination_file = file_name + ".cpp"
+        with open(destination_file, 'w') as destination:
+            destination.write(content)
+        source = destination_file
+        
     data = prepareData(source, True)
     if data == ["error"]:
         return data

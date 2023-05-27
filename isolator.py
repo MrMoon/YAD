@@ -17,7 +17,7 @@ def isolateFunction(source: str  = typer.Argument(..., help="The source code tha
     findFunction = codeParser.positions(source,"function", prototype)
     if findFunction == ["error"]:
         return
-    if findFunction == None or findFunction == []:
+    if findFunction == []:
         print("Warning: Function doesn't exist in " + source +" file")
         return 
     
@@ -43,7 +43,7 @@ def isolateFunction(source: str  = typer.Argument(..., help="The source code tha
         forward_implementation = prototype.split(parent_class)[0] + prototype.split(parent_class)[1]
         forward_implementation = forward_implementation.split("::")[0] + forward_implementation.split("::")[1]
     
-    #commenting out the function in destination file 
+    #commenting out the function in destination file
     commentController.CommentOutFunction(destination, prototype, 1, destination)
     
     #case: forward declaration or memebr functions implemented outside a class
@@ -130,8 +130,13 @@ def isolateClass(
         #if class exists in destination.cpp, it will be replaced by the isolated class.
         else:
             lines =  lines[0: class_position[0]-1] + things +  ["\n"] + lines[class_position[0]-1: ]
+    
+    
+    
+    # Write the modified lines to the destination file
     with open(destination, "w") as destination_file:
         destination_file.writelines(lines)
+    
 
 
 
