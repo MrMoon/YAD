@@ -1,5 +1,5 @@
 import typer
-from y4d import restrictor as restrictor
+import restrictor
 
 app = typer.Typer()
 
