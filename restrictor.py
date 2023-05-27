@@ -51,14 +51,14 @@ def scopeGetter(source:str, scope:str ):
 @app.command("restrict")
 def restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
              rules: str  = typer.Argument(..., help="The path of the YAML file containing user requirements."),
-             output: str  = typer.Option("#", "-o", help="If # this will make restrict print the number of violations, Input V if you want a list of violations to be printed and more information (default is #) (Takes only V or #)."),
+             output: str  = typer.Option("n", "-o", help="If n this will make restrict print the number of violations, Input V if you want a list of violations to be printed and more information (default is n) (Takes only V or n or N)."),
              hide: bool = typer.Argument(False, hidden=True, help="A hidden variable for developers use, used with checkAPI to show the names of the functions or classes that are violating the YAML file (extra)."),
              hide2: bool = typer.Argument(False, hidden=True, help="A hidden variable for developers use, used to show that checkAPI called restrict")):
     """
     This tool will recieve a YAML file made by the user and restrict a .cpp or .h file according to that YAML file, it will return a list of findings (for YAML file explanation check GitHub).
     """
     #Used to control the style of output
-    if output not in ["#", "V", "v"]:
+    if output not in ["n", "N", "V", "v"]:
         print("Invalid -o input")
         return False
     
