@@ -48,7 +48,7 @@ def scopeGetter(source:str, scope:str ):
 
 
 #Function that uses all other restriction functions that are below it, it recieves a YAML file which lets it know which functions to run
-@app.command("restrict")
+@app.command("-r")
 def restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
              rules: str  = typer.Argument(..., help="The path of the YAML file containing user requirements."),
              output: str  = typer.Option("n", "-o", help="If n this will make restrict print the number of violations, Input V if you want a list of violations to be printed and more information (default is n) (Takes only V or n or N)."),
@@ -305,7 +305,7 @@ def restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
 
 
 #Function to restrict a single library, no need for the YAML file, further explanation available exactly below function definition
-@app.command("library")
+@app.command("-l")
 def libRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
                  restriction: str = typer.Argument(..., help="The restriction type used for 3 ways of checking:\n\nat_least: The library being checked must exist (It can be with other libraries).\n\nexactly: The library being checked must only exist (It can not be with other libraries).\n\nforbidden: The library being checked must not exist."),
                  lib: str = typer.Argument(..., help="The name of the library the user wants to check (only input the name of the library without #include)."),
@@ -369,7 +369,7 @@ def libRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or
 
 
 #Function to restrict a single keyword, no need for the YAML file, further explanation available exactly below function definition.
-@app.command("keyword")
+@app.command("-k")
 def wordRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
                  restriction: str = typer.Argument(..., help="The restriction type used for 2 ways of checking:\n\nat_least: The keyword being checked must exist (It can be with other keywords).\n\nforbidden: The keyword being checked must not exist.\n\nexactly not available for keywords, will work as at_least."),
                  keyword: str = typer.Argument(..., help="The keyword the user wants to check (This function matches using regex, function prototypes don't work here, must input exactly what you want to match)."),
@@ -414,7 +414,7 @@ def wordRestrict(source: str  = typer.Argument(..., help="The path of the .cpp o
 
 
 #Function to restrict a single class, no need for the YAML file, further explanation available exactly below function definition.
-@app.command("class")
+@app.command("-c")
 def classRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
                  restriction: str = typer.Argument(..., help="The restriction type used for 3 ways of checking:\n\nat_least: The class being checked must exist (It can be with other classes).\n\nexactly: The class being checked must only exist (It can not be with other classes).\n\nforbidden: The class being checked must not exist."),
                  prototype: str = typer.Argument(..., help="The class the user wants to check (Must input like this: \"class name\")."),
@@ -479,7 +479,7 @@ def classRestrict(source: str  = typer.Argument(..., help="The path of the .cpp 
 
 
 #Function to restrict a single function, no need for the YAML file, further explanation available exactly below function definition.
-@app.command("function")
+@app.command("-f")
 def funcRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
                  restriction: str = typer.Argument(..., help="The restriction type used for 3 ways of checking:\n\nat_least: The function being checked must exist (It can be with other functions).\n\nexactly: The function being checked must only exist (It can not be with other functions).\n\nforbidden: The function being checked must not exist."),
                  prototype: str = typer.Argument(..., help="The function the user wants to check (Must input like this: \"int functionName(int, int)\"."),
@@ -553,7 +553,7 @@ def funcRestrict(source: str  = typer.Argument(..., help="The path of the .cpp o
 
 
 #Function to restrict a single (private/public/protected) function, no need for the YAML file, further explanation available exactly below function definition.
-@app.command("access")
+@app.command("-a")
 def accessRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants restrictor to work on."),
                  restriction: str = typer.Argument(..., help="The restriction type used for 3 ways of checking:\n\nat_least: The function being checked must exist (It can be with other functions).\n\nexactly: The function being checked must only exist (It can not be with other functions).\n\nforbidden: The function being checked must not exist."),
                  prototype: str = typer.Argument(..., help="The function the user wants to check (Must input like this: \"int functionName(int, int)\" or \"int functionName(int x,int y)\")."),
