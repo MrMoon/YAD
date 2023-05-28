@@ -63,12 +63,8 @@ def restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
         return False
     
     outputBool = False
-    if output == "#":
+    if output == "n" or output == "N":
         outputBool = True
-
-    #Just to increase speed of code, this is explained in prepare data in codeparser
-    if not hide2:
-        commentController.includePreparer(source)
 
     with open(rules) as file:
         yamlFile = yaml.load(file, Loader=yaml.FullLoader)
@@ -187,7 +183,7 @@ def restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
                     exactCount += 1
                     if exactCount == 1:
                         if critData['scope'].lower() == "global" or critData['scope'] == "":
-                            data = codeParser.prepareData(newSource, False)
+                            data = codeParser.prepareData(newSource, True)
                             if data == ["error"]:
                                 return False
                         else:
@@ -195,7 +191,7 @@ def restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
                             file = open("restrictorGen.cpp", "w")
                             file.write(scopeG)
                             file.close()
-                            data = codeParser.prepareData("restrictorGen.cpp", False)
+                            data = codeParser.prepareData("restrictorGen.cpp", True)
                             if data == ["error"]:
                                 return False
                         for decl in data['nodes']:
@@ -228,7 +224,7 @@ def restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
                     exactCount += 1
                     if exactCount == 1:
                         if critData['scope'].lower() == "global" or critData['scope'] == "":
-                             data = codeParser.prepareData(newSource, False)
+                             data = codeParser.prepareData(newSource, True)
                              if data == ["error"]:
                                 return False
                         else:
@@ -236,7 +232,7 @@ def restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
                             file = open("restrictorGen.cpp", "w")
                             file.write(scopeG)
                             file.close()
-                            data = codeParser.prepareData("restrictorGen.cpp", False)
+                            data = codeParser.prepareData("restrictorGen.cpp", True)
                             if data == ["error"]:
                                 return False
                         for decl in data['nodes']:
@@ -270,7 +266,7 @@ def restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
                     exactCount += 1
                     if exactCount == 1:
                         if critData['scope'].lower() == "global" or critData['scope'] == "":
-                             data = codeParser.prepareData(newSource, False)
+                             data = codeParser.prepareData(newSource, True)
                              if data == ["error"]:
                                 return False
                         else:
@@ -278,7 +274,7 @@ def restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
                             file = open("restrictorGen.cpp", "w")
                             file.write(scopeG)
                             file.close()
-                            data = codeParser.prepareData("restrictorGen.cpp", False)
+                            data = codeParser.prepareData("restrictorGen.cpp", True)
                             if data == ["error"]:
                                 return False
                         for decl in data['nodes']:
@@ -298,9 +294,6 @@ def restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
     if outputBool:
         print(violationCount)
     
-    #Just to increase speed of code, this is explained in prepare data in codeparser
-    if not hide2:
-        commentController.includeRevert(source)
 
 
 
@@ -431,13 +424,15 @@ def classRestrict(source: str  = typer.Argument(..., help="The path of the .cpp 
     
     #Check if global scope or not, if not then use scopeGetter to get everything in the scope defined by the user
     if scope.lower() == "global" or scope == "":
-        data = codeParser.prepareData(source, False)
+        data = codeParser.prepareData(source, True)
         if data == ["error"]:
             return False
         with open(source, 'r') as f:
             scopeG = f.read()
     else:
         scopeG = scopeGetter(source, scope)
+        if scopeG == ["error"]:
+            return False
         file = open("restrictorGen.cpp", "w")
         file.write(scopeG)
         file.close()
@@ -496,13 +491,15 @@ def funcRestrict(source: str  = typer.Argument(..., help="The path of the .cpp o
     
     #Check if global scope or not, if not then use scopeGetter to get everything in the scope defined by the user
     if scope.lower() == "global" or scope == "":
-        data = codeParser.prepareData(source, False)
+        data = codeParser.prepareData(source, True)
         if data == ["error"]:
             return False
         with open(source, 'r') as f:
             scopeG = f.read()
     else:
         scopeG = scopeGetter(source, scope)
+        if scopeG == ["error"]:
+            return False
         file = open("restrictorGen.cpp", "w")
         file.write(scopeG)
         file.close()
@@ -519,7 +516,7 @@ def funcRestrict(source: str  = typer.Argument(..., help="The path of the .cpp o
     for p in prototypeVars:
         prototypeRegex += ".*" + p.strip().split(' ')[0] + ".*,"
     prototypeRegex = prototypeRegex[:-1] + ').*\n*.*{[\s\S]*}(?=\s|$)'
-    
+
     empty = []
     #Check if function exists and print true or false according to restriction
     if codeParser.findLocationFunction(data, prototype, source) != empty:
@@ -570,13 +567,15 @@ def accessRestrict(source: str  = typer.Argument(..., help="The path of the .cpp
     
     #Check if global scope or not, if not then use scopeGetter to get everything in the scope defined by the user as well as preparing data for access_type search
     if scope.lower() == "global" or scope == "":
-        data = codeParser.prepareData(source, False)
+        data = codeParser.prepareData(source, True)
         if data == ["error"]:
             return False
     else:
-        data = scopeGetter(source, scope)
+        scopeG = scopeGetter(source, scope)
+        if scopeG == ["error"]:
+            return False
         file = open("restrictorGen.cpp", "w")
-        file.write(data)
+        file.write(scopeG)
         file.close()
         data = codeParser.prepareData("restrictorGen.cpp", False)
         if data == ["error"]:
@@ -611,10 +610,11 @@ def checkAPI(source: str  = typer.Argument(..., help="The path of the .cpp or .h
     if output not in ["n", "N", "V", "v"]:
         print("Invalid -o input")
         return False
-    
-    #Just to increase speed of code, this is explained in prepare data in codeparser
-    commentController.includePreparer(source)
-    
+
+    data = codeParser.prepareData(compare, True)
+    if data == ["error"]:
+        return False
+
     #Makes sure that restriction inputted is a viable restriction
     if restriction.lower() not in ["exactly", "forbidden", "at_least"]:
         print("Invalid Restriction Input")
@@ -626,14 +626,14 @@ def checkAPI(source: str  = typer.Argument(..., help="The path of the .cpp or .h
     allProtectedFunctions = []
     allFunctions = []
     allClasses = []
-    data = codeParser.prepareData(compare, True)
-    if data == ["error"]:
-        return False
-    if data == 'error':
-        return False
     virtual = ""
     const = ""
+    unsigned = ""
     for decl in data['nodes']:
+        if decl['prototype'].split(' ')[0] == "unsigned":
+            unsigned = " " + decl['prototype'].split(' ')[1]
+        else:
+            unsigned = ""
         if decl['kind'] == "CXX_METHOD":
             if decl['is_virtual_method'] == True:
                 virtual = "virtual "
@@ -644,20 +644,20 @@ def checkAPI(source: str  = typer.Argument(..., help="The path of the .cpp or .h
             else:
                 const = ""
             if decl['access_type'] == "":
-                allFunctions.append(decl['prototype'].split(' ')[0] + " " + decl['displayname'] + const)
+                allFunctions.append(decl['prototype'].split(' ')[0] + unsigned + " " + decl['displayname'] + const)
             elif decl['access_type'] == 'PRIVATE':
-                allPrivFunctions.append(virtual + decl['prototype'].split(' ')[0] + " " + decl['parent_class'].split(' ')[1] + "::" + decl['displayname'] + const)
+                allPrivFunctions.append(virtual + decl['prototype'].split(' ')[0] + unsigned + " " + decl['parent_class'].split(' ')[1] + "::" + decl['displayname'] + const)
             elif decl['access_type'] == 'PUBLIC':
-                allPublicFunctions.append(virtual + decl['prototype'].split(' ')[0] + " " + decl['parent_class'].split(' ')[1] + "::" + decl['displayname'] + const)
+                allPublicFunctions.append(virtual + decl['prototype'].split(' ')[0] + unsigned + " " + decl['parent_class'].split(' ')[1] + "::" + decl['displayname'] + const)
             elif decl['access_type'] == 'PROTECTED':
-                allProtectedFunctions.append(virtual + decl['prototype'].split(' ')[0] + " " + decl['parent_class'].split(' ')[1] + "::" + decl['displayname'] + const )
+                allProtectedFunctions.append(virtual + decl['prototype'].split(' ')[0] + unsigned + " " + decl['parent_class'].split(' ')[1] + "::" + decl['displayname'] + const )
         elif decl['kind'] == "FUNCTION_DECL":
-            if len(decl['prototype'].split(' ')[0].split('**')) == 1 and len(decl['prototype'].split(' ')[0].split('*')) == 1:
-                allFunctions.append(decl['prototype'].split(' ')[0] + " " + decl['displayname'] + const)
+            if len(decl['prototype'].split('(')[0].split('**')) == 1 and len(decl['prototype'].split('(')[0].split('*')) == 1:
+                allFunctions.append(decl['prototype'].split(' ')[0] + unsigned + " " + decl['displayname'] + const)
             elif len(decl['prototype'].split('**')) > 1:
-                allFunctions.append(decl['prototype'].split('**')[0] + "**" + " " + decl['displayname'] + const)
+                allFunctions.append(decl['prototype'].split('**')[0] + unsigned + "** " + decl['displayname'] + const)
             else:
-                allFunctions.append(decl['prototype'].split(' ')[0] + "*" + " " + decl['displayname' + const])
+                allFunctions.append(decl['prototype'].split(' ')[0] + unsigned + " * " + decl['displayname' + const])
         if decl['kind'] == "CLASS_DECL":
             allClasses.append("class " + decl['prototype'])
     
@@ -670,9 +670,6 @@ def checkAPI(source: str  = typer.Argument(..., help="The path of the .cpp or .h
 
     if not hide:
         checkAPI(compare, restriction, source, output, True)
-
-    #Just to increase speed of code, this is explained in prepare data in codeparser
-    commentController.includeRevert(source)
 
 
 
