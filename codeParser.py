@@ -219,15 +219,15 @@ def prepareData (source: str, hide: bool):
     tu = index.parse(source)
     
     #check if source code compiles
-    if len(tu.diagnostics) > 0:
-        for d in tu.diagnostics:
-            print(d)
-        print("Error: " + source + " doesn't compile successfully")
-        return ["error"]
+    if hide:
+        if len(tu.diagnostics) > 0:
+            for d in tu.diagnostics:
+                print(d)
+            print("Error: " + source + " doesn't compile successfully")
+            return ["error"]
 
     #comment out libraries and include in source file
-    if hide:
-        commentController.includePreparer(source)
+    commentController.includePreparer(source)
     
     #Call again with code without libraries and using namespace
     index = clang.cindex.Index.create()
@@ -305,9 +305,9 @@ def prepareData (source: str, hide: bool):
     
     jsonFormat = json.dumps(output, indent=4)
     data = json.loads(jsonFormat)
+    
     # Revert commenting changes done before
-    if hide:
-        commentController.includeRevert(source)
+    commentController.includeRevert(source)
     return data
 
 def positions ( source: str, type: str, prototype: str, option = 0):
