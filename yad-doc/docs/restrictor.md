@@ -1,100 +1,60 @@
-# Isolator
+# Restrcitor
 
-## What is Isolator? 
-Isolator tool isolates the whole code from a given function or class inside destination code and replaces the isolated function or class from source code inside destination code.
-It consists of two parts, IsolateFunction and IsolateClass.
+## What is Restrictor? 
+The Restrictor CLI tool allows the user to restrict the use of certain elements defined in a restrictions file such as libraries, keywords, global variables, extra functions, visibility of functions, recursion and iteration. 
 
-## Commands:
-### Isolate Function
-` isolator isolateFunction source.cpp destination.cpp "function prototype" ` 
-### Isolate Class 
-` isolator isolateClass source.cpp destination.cpp "class  class-name" `
-
-By default, it only isolates the class with its member functions. Adding the option '-all' also isolates all its dependent classes:
-
-` isolator isolateClass source.cpp destination.cpp "class  class-name" -all True`
+## Commands
+` restrict source.cpp restrictions.yaml` -restrictions.yaml is a yaml file that contains different restrictions and criterias  
+` restrict source.cpp criteria restriction "to_be_restricted"`
+    
+    example:
+    restrict source.cpp library at_least "iostream algorithms math"
+    
+    -check that libraries iostream, algorithm, and math are included inside source.cpp
 
 ## How does it work?
-First of all the desired function\class must have the same signature in both source and destination files, then Isolator will search for the desired function\class inside source.cpp and take a copy of it, after that it will search for the desired function\class inside destination.cpp.
-    
-## Where it will be inserted? 
-### <strong> Isolate fucntion: </strong>
+The user will create a yaml file to include all the restrictions to be checked, followed by a restriction of 3 types being one of the following:
 
-<strong> Non-member function: </strong>
+- <strong>at_least:</strong> at least all the given appears in source.cpp, source.cpp can have more.
 
-Function's prototype will be inserted in the beginnig of the code, and function's implementation will be inserted at the end of the code.
+- <strong>exactly:</strong> source.cpp contains exactly the given.
 
-<strong> Member function: </strong>
+- <strong>forbidden:</strong> source.cpp can't have any of the given.
 
-- The orginal function is implemented inside the class: 
+There are 7 supported criteria which are:
 
-    Function will be inserted at the end of the class.
+Libraries, Keyword, Classes, Functions, Public Functions, Private Functions and Protected Functions.
 
-- The orginal function is implemented inside the class: 
+<div class="bs-callout bs-callout-warning">
+  <h4>Note</h4>
+  For more explanation check the example section.
+</div>
 
-    Function's prototype will be inserted at the end of the class, and function's implementation will be inserted at the end of the code.
+## Error Scenarios:
+<strong> yaml file with syntax error: </strong>
+<h6> for example if the yaml file contained "libary" instead of "library", it will compile but withot processing the library field </h6>
 
-### <strong> Isolate Class:</strong>
-<strong> Class found in destination code: </strong>
-    
-Original class will be commented and the copied class from source.cpp will be pasted in the exact place of the original class in detination.cpp
+<strong> yaml file with logical error: </strong>
+<h6> for example if the yaml file contained a keyword with "exactly" restriction and after that the same keyword with "forbidden" restriction, the last restriction will be applied. </h6>
 
-<strong> Class not found in destination.cpp: </strong>
-    
-The copied class from source.cpp will be pasted at the end of detination.cpp 
+## Output options
+<strong> -n: </strong> 
+the default option, outputs the number of violations. 
 
-## Scenarios:
-### Isolate Function:
-Below are examples of how to write the function's parameter
+<strong> -v: </strong> outputs a list of violations. 
 
-<strong> Non-member Functions: </strong> 
+## Yaml File Structur:
+the Yaml file consists of:
 
-- Normal Function: simply write the function prototype, such as: 
-    - `"int sum(int , int)"`
-- Template Function write the function prototype along with the template definition:
-    - `"template <typename T> T myMax1(T &, T)"`
+- <strong> Criteria: </strong>  <h6> libraries, keywords, classes, functions, public functions, private functions or protected Functions.</h6>
+    For each criteria:
 
-<strong> Member Functions: </strong>
+    - <strong> Restriction: </strong>
+    <h6> at_least, exactly, or forbidden</h6>
+    - <strong> Scope: </strong> 
+        - <h6> choose the scope of restriction, such as "int functionC(int, int)" </h6>
+        - <h6> default value of scope is global. </h6>
+    - <strong> Names: </strong>
+    <h6> specify what you want to restrict
 
-- Normal & Template Fucntions: You need to add the name of the parent class:
-    - `"template <typename T> T MyClass:: myMax2(T &, T)"`
-    - `"void MyClass:: print()"` 
-- Static: Write the static key word at the beginning of the prototype:
-    - `"static void MyClass::eat()"`
-- const: 
-    - `"double MyClass:: getArea() const"` 
-- virtual: 
-    - `"virtual double MyClass:: getArea() const"`
-- pure virtual:
-    - `"virtual double MyClass:: getArea() const = 0"` 
-- constructor: 
-    - `"MyClass :: MyClass()"`
-- initiaizer list:
-    - `"MyClass :: MyClass(int, double, char) : myInt()"`
-- copy constructor: 
-    - `"MyClass :: MyClass(const MyClass&)"`
-- destructor: 
-    - `"MyClass :: ~MyClass()"`
-
-### Isolate Class:
-
-<strong> Class: </strong>
-
-- isolate class with member functions only:
-
-    - `isolator isolateClass source.cpp destination.cpp "class Animal"` 
-
-- isolate class with all dependent classes:
-
-    - `isolator isolateClass source.cpp destination.cpp "class Animal" -all true` 
-
-<strong> Struct: </strong>
-
-- isolate struct with member functions only:
-
-    - `isolator isolateClass source.cpp destination.cpp "struct Node"` 
-
-- isolate struct with all dependent classes:
-
-    - `isolator isolateClass source.cpp destination.cpp "struct Node" -all true` 
-
+## Example

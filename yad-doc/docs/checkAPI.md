@@ -12,8 +12,7 @@ It can chekc if both codes are exactly the same or if compare.cpp has at least a
 
 
 ## Output options
-<h3> <strong> -n: </strong> </h3> 
+<strong> -n: </strong> 
 the default option, outputs the number of violations. 
 
-<h3> <strong> -v:  </strong> </h3>
-outputs a list of violations. 
+<strong> -v:  </strong> outputs a list of violations. 
