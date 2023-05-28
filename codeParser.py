@@ -221,8 +221,6 @@ def prepareData (source: str, hide: bool):
     #check if source code compiles
     if hide:
         if len(tu.diagnostics) > 0:
-            for d in tu.diagnostics:
-                print(d)
             print("Error: " + source + " doesn't compile successfully")
             return ["error"]
 
