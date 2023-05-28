@@ -122,7 +122,7 @@ def findLocationFunction(data, prototype: str, source):
                 end = item['end']
                 start = item['start']
                 pos += [start, end, type, item['access_type']] 
-        
+    
     return pos
 
 def findLocationClass(data, prototype: str, source, type: str, iteration = 0):
@@ -169,6 +169,12 @@ def findLocationClass(data, prototype: str, source, type: str, iteration = 0):
                             returnType = item['prototype'].split(" ")[0]
                             func_prototype = returnType +" " + name + "::" +item['displayname']
                             pos+= findLocationFunction(data, func_prototype, source)
+                    if (item['kind'] == "CONSTRUCTOR" or item['kind'] == "DESTRUCTOR" )and item['parent_class'] == "class "+ name:
+                        returnType = item['prototype'].split(" ")[0]
+                        func_prototype = name + "::" +item['displayname']
+                        if item["initializer_list"] == "true":
+                            func_prototype += "("
+                        pos+= findLocationFunction(data, func_prototype, source)
             #check template member functions  
             if item["kind"] == "FUNCTION_TEMPLATE":
                 start_line = item['start']
@@ -214,6 +220,8 @@ def prepareData (source: str, hide: bool):
     
     #check if source code compiles
     if len(tu.diagnostics) > 0:
+        for d in tu.diagnostics:
+            print(d)
         print("Error: " + source + " doesn't compile successfully")
         return ["error"]
 
@@ -239,6 +247,7 @@ def prepareData (source: str, hide: bool):
                 
         #Save access type of member functions, anything else will have value "invalid"              
         access_type = str(node.access_specifier).split(".")[1]
+        
         #Save name of parent class
         if access_type == "INVALID":
             parent_class = ""
@@ -251,7 +260,7 @@ def prepareData (source: str, hide: bool):
             elif parent.kind == clang.cindex.CursorKind.STRUCT_DECL:
                 parent_class = "struct " + str(parent.spelling)
             
-        if node.kind == clang.cindex.CursorKind.CLASS_DECL:
+        if node.kind == clang.cindex.CursorKind.CLASS_DECL or node.kind == clang.cindex.CursorKind.STRUCT_DECL:
             classPointer = 0
             friendFlag = False
             
@@ -264,7 +273,7 @@ def prepareData (source: str, hide: bool):
 
         elif friendFlag:
             friend = node.spelling
-            if len(friend.split("class")) == 1: #check this: or len(friend.split("struct")):
+            if len(friend.split("class")) == 1 and len(friend.split("struct")) == 1:
                 friend = node.type.spelling.split('(')[0] + node.displayname
             output["nodes"][classPointer]["friend_with"].append(friend)
             friendFlag = False
@@ -296,7 +305,6 @@ def prepareData (source: str, hide: bool):
     
     jsonFormat = json.dumps(output, indent=4)
     data = json.loads(jsonFormat)
-
     # Revert commenting changes done before
     if hide:
         commentController.includeRevert(source)

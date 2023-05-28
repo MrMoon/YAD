@@ -39,7 +39,7 @@ def commentMaker(source: str, type: str, name: str, isolate =0, option=0, output
 
 
 #This function is responsible for removing all comments from a .cpp or .h file
-@app.command("-d")
+@app.command("d")
 def deleteComments(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants delete comments to work on."),
                     output: str  = typer.Option("", "-o", help="The path of the .cpp or .h file the user wants the output to be saved in (Default is printing on the terminal).")):
     """
@@ -61,7 +61,7 @@ def deleteComments(source: str  = typer.Argument(..., help="The path of the .cpp
 
 
 #This function is responsible for extracting all comments from a .cpp or .h file into a file or to print on the terminal
-@app.command("-e")
+@app.command("e")
 def extractComments(source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants extracts comments to work on."),
                     output: str  = typer.Option("", "-o", help="The path of the .cpp or .h file the user wants the output to be saved in (Default is printing on the terminal).")):
     """
@@ -90,7 +90,7 @@ def extractComments(source: str  = typer.Argument(..., help="The path of the .cp
 
 
 #This function is responsible for extracting all header comments from a .cpp or .h file into a file or to print on the terminal
-@app.command("-h")
+@app.command("h")
 def extractHeader(input: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants extracts header comments to work on."),
                    output: str  = typer.Option("", "-o", help="The path of the .cpp or .h file the user wants the output to be saved in (Default is printing on the terminal).")):
     """
@@ -131,7 +131,7 @@ def extractHeader(input: str  = typer.Argument(..., help="The path of the .cpp o
 
 
 #This function is responsible for commenting out classes specified by the user from a .cpp or .h file
-@app.command("-c")
+@app.command("c")
 def CommentOutClass(
     source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants comment out class to work on."),
     prototype: str  = typer.Argument(..., help="The class the user wants to check (Must input like this: \"class name\")."),
@@ -155,7 +155,7 @@ def CommentOutClass(
 
 
 #This function is responsible for commenting out functions specified by the user from a .cpp or .h file
-@app.command("-f")
+@app.command("f")
 def CommentOutFunction(
     source: str  = typer.Argument(..., help="The path of the .cpp or .h file the user wants comment out class to work on."),
     prototype: str  = typer.Argument(..., help="The function the user wants to check (Must input like this: \"int functionName(int, int)\"."),

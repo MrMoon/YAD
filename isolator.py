@@ -6,7 +6,7 @@ app = typer.Typer()
 
 
 
-@app.command("-f")
+@app.command("f")
 def isolateFunction(source: str  = typer.Argument(..., help="The source code that the function will be isolated from (.cpp/.h)"),
                     destination: str  = typer.Argument(..., help="The destination code where the function will be embedded or replaced (.cpp/.h)"),
                     prototype: str  = typer.Argument(..., help="The function prototype: return-type function-name parameters-types. In the case of member functions return-type class-name::function-name parameters-types. Example: int test(int, string). Must put them in quotations when using CLI.")):
@@ -77,7 +77,7 @@ def isolateFunction(source: str  = typer.Argument(..., help="The source code tha
 
 
 
-@app.command("-c")
+@app.command("c")
 def isolateClass(
     source: str  = typer.Argument(..., help="The source code that the function will be isolated from (.cpp/.h)"), 
     destination: str  = typer.Argument(..., help="The destination code where the function will be embedded or replaced (.cpp/.h)"), 
