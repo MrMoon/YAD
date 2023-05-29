@@ -93,46 +93,13 @@ private_functions:
     - static int test::functionI(int, int)
 ```
 
-## Commands
-` restrict source.cpp restrictions.yaml` -restrictions.yaml is a yaml file that contains different restrictions and criterias  
-` restrict source.cpp criteria restriction "to_be_restricted"`
-    
-    example:
-    restrict source.cpp library at_least "iostream algorithms math"
-    
-    -check that libraries iostream, algorithm, and math are included inside source.cpp
-
-## How does it work?
-The user will create a yaml file to include all the restrictions to be checked, followed by a restriction of 3 types being one of the following:
-
-- <strong>at_least:</strong> at least all the given appears in source.cpp, source.cpp can have more.
-
-- <strong>exactly:</strong> source.cpp contains exactly the given.
-
-- <strong>forbidden:</strong> source.cpp can't have any of the given.
-
-There are 7 supported criteria which are:
-
-Libraries, Keyword, Classes, Functions, Public Functions, Private Functions and Protected Functions.
-
-<div class="bs-callout bs-callout-warning">
-  <h4>Note</h4>
-  For more explanation check the example section.
-</div>
-
 ## Error Scenarios:
-<strong> yaml file with syntax error: </strong>
-<h6> for example if the yaml file contained "libary" instead of "library", it will compile but withot processing the library field </h6>
+<strong> YAML file with syntax error: </strong>
+<h6> for example if the yaml file contained "libary" instead of "library", restrictor will not check for libraries and return an answer as if the "library" criterion was empty.</h6>
 
 <strong> yaml file with logical error: </strong>
-<h6> for example if the yaml file contained a keyword with "exactly" restriction and after that the same keyword with "forbidden" restriction, the last restriction will be applied. </h6>
-
-## Output options
-<strong> -n: </strong> 
-the default option, outputs the number of violations. 
-
-<strong> -v: </strong> outputs a list of violations. 
-
+<h6> for example if the yaml file contained a keyword with "exactly" restriction and after that the same keyword with "forbidden" restriction, the last occurance in the file will be applied.</h6>
+ 
 ## Yaml File Structur:
 the Yaml file consists of:
 
