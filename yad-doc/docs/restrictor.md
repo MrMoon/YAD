@@ -34,7 +34,7 @@ Each criterion has a unique character to use with the command, the characters ar
 
 - <strong>a:</strong> `restrict a source.cpp exactly "float shape::area()" "class shape" private` -Checks if the only private function in class shape is area() (it must exist).
 
-##How does many criteria restriction work?
+## How does many criteria restriction work?
 
 <strong>r:</strong> used for restricting source file according to a YAML restrictions file, the format of the restrictions file is explained in Restrictions File section found below.
 
