@@ -1,7 +1,7 @@
-# Welcome to Yad
+# Welcome to YAD
 
 
-## What is Yad?
+## What is YAD?
 YAD is a set of CLI tools that streamlines the process of building an automatic grader for C++ programming assignments. It provides a set of features that instructors and developers can incorporate into their existing automatic graders to save time and improve the grading process. 
 
 ## Who benifits from YAD? 
@@ -9,10 +9,14 @@ The target audience of YAD includes instructors and developers in any programmin
 
 ## Getting Started
 
-* to install Yad, run the following command(s)
-* `pip install yad` 
-* `pip install libclang` - To install liblclang
-* `pip install pyyaml` - To install yaml
+* To install YAD, run the following command
+* `pip install Y4D`
+
+* To update YAD, run the following command
+* `pip install --upgrade Y4D`
+
+* To delete YAD, run the following command
+* `pip uninstall Y4D`
 
 ## Yad tools
 ### Isolator
