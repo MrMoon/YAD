@@ -54,11 +54,13 @@ The restrictions file is a YAML file type, this file is required for the functio
 - <strong> Criteria supported: </strong>  <h6> libraries, keywords, classes, functions, public functions, private functions or protected Functions.</h6>
     For each criteria:
     
-    - <strong> Restriction: </strong> <h6> (at_least, exactly, or forbidden)</h6>
+    - <strong> Restriction: 
+        - </strong> <h6> (at_least, exactly, or forbidden)</h6>
     - <strong> Scope: </strong> 
         - <h6> choose the scope of restriction, such as "int functionC(int, int)" </h6>
         - <h6> default value of scope is global when left empty.</h6>
-    - <strong> Names: </strong> <h6> specify what you want to restrict.</h6>
+    - <strong> Names: 
+        - </strong> <h6> specify what you want to restrict.</h6>
 
 ### Restrictions File Example
 You can find the sample file in the GitHub files or below:
