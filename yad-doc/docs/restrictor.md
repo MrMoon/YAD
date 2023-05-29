@@ -52,7 +52,7 @@ This command includes an output option <strong>-o</strong>, the output option is
 
 The restrictions file is a YAML file type, this file is required for the functionality of the many criteria command. The criteria included in this file are: Libraries, Keywords, Classes, Functions, Public Functions, Protected Functions, Private Functions. You can find a sample file in the GitHub files or a sample below:
 
-`
+'''
 libraries:
   restriction: at_least
   scope: global
@@ -91,7 +91,7 @@ private_functions:
     - int test::functionG(int, int) const
     - virtual void test::functionH()
     - static int test::functionI(int, int)
-`
+'''
 
 ## Commands
 ` restrict source.cpp restrictions.yaml` -restrictions.yaml is a yaml file that contains different restrictions and criterias  
