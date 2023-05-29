@@ -48,7 +48,7 @@ This command includes an output option <strong>-o</strong>, the output option is
 
 `restrict r source.cpp rules.YAML -o v` -Returns a list of violations with minor explanation.
 
-### Restriction File Structur:
+### Restriction File Structure:
 The restrictions file is a YAML file type, this file is required for the functionality of the many criteria command.
 
 - <strong> Criteria supported: </strong>   libraries, keywords, classes, functions, public functions, private functions or protected Functions.
