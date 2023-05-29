@@ -10,40 +10,43 @@ app = typer.Typer()
 #Returns everything in the scope the user defined
 def scopeGetter(source:str, scope:str ):
     #Checks if scope for function or class
-        type = scope.split(" ")[0]
-        if type != "class":
-            type = "function"
-        
-        #Find where function or class is
-        pos = codeParser.positions(source, type, scope)
-        if pos == ["error"]:
-            return ["error"]
-        if pos == []:
-            print("Warning: " + type + "doesn't exist in " + source +" file")
-            return ["error"]
-        searchPos = []
-        count = 0
-        for p in pos:
-            if count != 2:
-                searchPos.append(p)
-                count += 1
-            else:
-                count = 0
+    type = scope.split(" ")[0]
+    if type != "class":
+        type = "function"
+    
+    #Find where function or class is
+    pos = codeParser.positions(source, type, scope)
+    if pos == ["error"]:
+        return ["error"]
+    if pos == []:
+        print("Warning: " + type + " doesn't exist in " + source +" file")
+        return ["error"]
+    searchPos = []
+    count = 0
 
-        #Get back only the lines in the specified scope
-        with open(source, 'r') as f:
-            source = f.readlines()
-        scopeLines = []
-        i = 0
-        while i < len(searchPos):
-            j = searchPos[i] - 1
-            while j < searchPos[i+1]:
-                scopeLines.append(source[j])
-                j += 1
-            i += 2
+    for p in pos:
+        if count != 2 and count != 3:
+            searchPos.append(p)
+            count += 1
+        elif count == 2:
+            count += 1
+        else:
+            count = 0
 
-        source = '\n'.join(scopeLines)
-        return source
+    #Get back only the lines in the specified scope
+    with open(source, 'r') as f:
+        source = f.readlines()
+    scopeLines = []
+    i = 0
+    while i < len(searchPos):
+        j = searchPos[i] - 1
+        while j < searchPos[i+1]:
+            scopeLines.append(source[j])
+            j += 1
+        i += 2
+
+    source = '\n'.join(scopeLines)
+    return source
 
 
 
@@ -591,7 +594,7 @@ def accessRestrict(source: str  = typer.Argument(..., help="The path of the .cpp
     spelling = prototype.split('(')[0].split(' ')[-1].split('::')[-1]
     
     for decl in data['nodes']:
-        if decl['kind'] == "CXX_METHOD" and decl['spelling'] == spelling and decl['prototype'] == proto and decl['access_type'] == type.upper():
+        if decl['kind'] == "CXX_METHOD" and decl['spelling'] == spelling and decl['prototype'] == proto and decl['access_type'] == type.lower():
             return funcRestrict(source, restriction, prototype, scope, hide)
     if not hide:
         print("False")
