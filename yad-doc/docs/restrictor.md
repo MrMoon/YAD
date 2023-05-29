@@ -3,14 +3,14 @@
 ## What is Restrictor? 
 The Restrictor CLI tool allows the user to restrict the use of certain criterion or many criteria in a source file, the restriction follows one of three types of restrition explained below.
 
-##Types of Restriction:
+## Types of Restriction:
 - <strong>at_least:</strong> must contain the search criterion in source.cpp, other components of the same criterion can exist.
 
 - <strong>exactly:</strong> must contain the search criterion in source.cpp, other components of the same criterion must not exist.
 
 - <strong>forbidden:</strong> must not contain the search criterion, other components of the same criterion can exist.
 
-##How does a single criterion restriction work?
+## How does a single criterion restriction work?
 Each criterion has a unique character to use with the command, the characters are explained below, the output of the commands is True (following restriction) or False (not following restriction):
 
 - <strong>l</strong> used for restricting libraries, must input only the library name, this is the only criteria that doesn't allow scope definition (don't input #include).
@@ -23,7 +23,7 @@ Each criterion has a unique character to use with the command, the characters ar
 
 - <strong>a</strong> used for restricting functions with their access types (Public/Protected/Private), input function access type followed by function prototype.
 
-###Example Commands:
+### Example Commands:
 - <strong>l</strong> `restrict l source.cpp exactly iostream` -Checking if only iostream exists in code (it must exist).
 
 - <strong>k</strong> `restrict k source.cpp at_least follow "int follow(int, int)"` -Checking recursion exists (it must exist).
