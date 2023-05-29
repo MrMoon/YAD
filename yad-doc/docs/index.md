@@ -23,7 +23,7 @@ The target audience of YAD includes instructors and developers in any programmin
 * `pip uninstall Y4D`
 
 ## YAD tools
-### [Isolator](./isolator/)
+### [Isolator](./isolator.md/)
 Isolates a function or list of functions or classes inside the code and replace them with their counterparts from the reference code.
 ### [Restrictor](./restrictor/)
 Restricts the use of certain functions, libraries, and keywords inside the code.
