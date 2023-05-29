@@ -59,8 +59,8 @@ The restrictions file is a YAML file type, this file is required for the functio
         - <h6> exactly </h6>
         - <h6> forbidden </h6>
     - <strong> Scope: </strong> 
-        - <h6> choose the scope of restriction, such as "int functionC(int, int)" </h6>
-        - <h6> default value of scope is global when left empty. </h6>
+        - <h6> Choose the scope of restriction, such as "int functionC(int, int)" </h6>
+        - <h6> Default value of scope is global when left empty. </h6>
     - <strong> Names: </strong>
         - <h6> Specify what you want to restrict. </h6>
 
@@ -110,7 +110,7 @@ private_functions:
 
 ## Error Scenarios:
 <strong> YAML file with syntax error: </strong>
-<h6> for example if the yaml file contained "libary" instead of "library", restrictor will not check for libraries and return an answer as if the "library" criterion was empty.</h6>
+<h6> For example if the yaml file contained "libary" instead of "library", restrictor will not check for libraries and return an answer as if the "library" criterion was empty.</h6>
 
 <strong> YAML file with logical error: </strong>
-<h6> for example if the yaml file contained a keyword with "exactly" restriction and after that the same keyword with "forbidden" restriction, the last occurance in the file will be applied.</h6>
+<h6> For example if the yaml file contained a keyword with "exactly" restriction and after that the same keyword with "forbidden" restriction, the last occurance in the file will be applied.</h6>
