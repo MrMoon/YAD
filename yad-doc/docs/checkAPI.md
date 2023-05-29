@@ -13,7 +13,7 @@ CheckAPI is dependent on Restrictor.
 
 
 ## Output options
-<strong> -o </strong> followed by either n or v (not case sensitive).
+<strong> -o</strong>: followed by either n or v (not case sensitive).
 
 <strong>n</strong>: number of violation (default option).
 

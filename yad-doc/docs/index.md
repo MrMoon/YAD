@@ -23,13 +23,13 @@ The target audience of YAD includes instructors and developers in any programmin
 * `pip uninstall Y4D`
 
 ## YAD tools
-### Isolator
+### [Isolator](./isolator/)
 Isolates a function or list of functions or classes inside the code and replace them with their counterparts from the reference code.
-### Restrictor
+### [Restrictor](./restrictor/)
 Restricts the use of certain functions, libraries, and keywords inside the code.
-### CheckAPI
+### [CheckAPI](./checkAPI/)
 Checks if signature of all functions in the code follows all signatures in a given code.
-### Comment Controller
+### [Comment Controller](./commentController/)
 Extracts and deletes comments, comments out a given function or clas in the code.
 
 ## Supported Language 
@@ -40,6 +40,7 @@ Extracts and deletes comments, comments out a given function or clas in the code
 
 ## Windows Users Issues
 In some cases YAD will be installed in a path that is not in your enivronment variables, in order to solve that do the following:
+
 * Copy the path of YAD provided by pip install command in CMD.
 * Press windows and break button, or go to settings then about.
 * Choose Advanced system settings.

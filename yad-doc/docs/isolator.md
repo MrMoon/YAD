@@ -6,13 +6,13 @@ It consists of two parts, IsolateFunction and IsolateClass.
 
 ## Commands:
 ### Isolate Function
-` isolator isolateFunction source.cpp destination.cpp "function prototype" ` 
+` isolate f source.cpp destination.cpp "function prototype" ` 
 ### Isolate Class 
-` isolator isolateClass source.cpp destination.cpp "class  class-name" `
+` isolate c source.cpp destination.cpp "class  class-name" `
 
 By default, it only isolates the class with its member functions. Adding the option '-all' also isolates all its dependent classes:
 
-` isolator isolateClass source.cpp destination.cpp "class  class-name" -all True`
+` isolate c source.cpp destination.cpp "class  class-name" -all True`
 
 ## How does it work?
 First of all the desired function\class must have the same signature in both source and destination files, then Isolator will search for the desired function\class inside source.cpp and take a copy of it, after that it will search for the desired function\class inside destination.cpp.
@@ -82,7 +82,4 @@ The copied class from source.cpp will be pasted at the end of detination.cpp
     </div>
 </div>
 
-<div class="bs-callout bs-callout-warning">
-  <h4>Note</h4>
-  for reference on how to write functions' parameters, please check <href a= "reference.md"> the reference page
-</div>
+For reference on how to write functions' parameters, please check [the reference page](./reference.md)

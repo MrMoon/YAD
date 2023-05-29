@@ -24,15 +24,15 @@ Each criterion has a unique character to use with the command, the characters ar
 - <strong>a:</strong> used for restricting functions with their access types (Public/Protected/Private), input function access type followed by function prototype.
 
 ### Example Commands:
-- <strong>l:</strong> `restrict l source.cpp exactly iostream` -Checking if only iostream exists in code (it must exist).
+- <strong>l:</strong> `restrict l source.cpp exactly iostream` <h6> Checking if only iostream exists in code (it must exist). </h6>
 
-- <strong>k:</strong> `restrict k source.cpp at_least follow "int follow(int, int)"` -Checking recursion exists (it must exist).
+- <strong>k:</strong> `restrict k source.cpp at_least follow "int follow(int, int)"` <h6> Checking recursion exists (it must exist).</h6>
 
-- <strong>c:</strong> `restrict c source.cpp forbidden "class shape" global` -Checking if class shape exists in code (it must not exist).
+- <strong>c:</strong> `restrict c source.cpp forbidden "class shape" global` <h6> Checking if class shape exists in code (it must not exist).</h6>
 
-- <strong>f:</strong> `restrict f source.cpp at_least "int follow(int, float)" global` -Checking if function int follow(int, float) exists (it must exist).
+- <strong>f:</strong> `restrict f source.cpp at_least "int follow(int, float)" global` <h6> Checking if function int follow(int, float) exists (it must exist).</h6>
 
-- <strong>a:</strong> `restrict a source.cpp exactly "float shape::area()" "class shape" private` -Checks if the only private function in class shape is area() (it must exist).
+- <strong>a:</strong> `restrict a source.cpp exactly "float shape::area()" "class shape" private` <h6> Checks if the only private function in class shape is area() (it must exist).</h6>
 
 ## How does many criteria restriction work?
 
@@ -51,18 +51,18 @@ This command includes an output option <strong>-o</strong>, the output option is
 ### Restriction File Structur:
 The restrictions file is a YAML file type, this file is required for the functionality of the many criteria command.
 
-- <strong> Criteria supported: </strong>  <h6> libraries, keywords, classes, functions, public functions, private functions or protected Functions.</h6>
+- <strong> Criteria supported: </strong>   libraries, keywords, classes, functions, public functions, private functions or protected Functions.
     For each criteria:
     
     - <strong> Restriction: </strong>
-        - <h6> at_least </h6>
-        - <h6> exactly </h6>
-        - <h6> forbidden </h6>
+        -  at_least 
+        -  exactly 
+        -  forbidden 
     - <strong> Scope: </strong> 
-        - <h6> Choose the scope of restriction, such as "int functionC(int, int)" </h6>
-        - <h6> Default value of scope is global when left empty. </h6>
+        -  Choose the scope of restriction, such as "int functionC(int, int)" 
+        -  Default value of scope is global when left empty. 
     - <strong> Names: </strong>
-        - <h6> Specify what you want to restrict. </h6>
+        -  Specify what you want to restrict. 
 
 ### Restrictions File Example
 You can find the sample file in the GitHub files or below:
@@ -109,8 +109,8 @@ private_functions:
 ```
 
 ## Error Scenarios:
-<strong> YAML file with syntax error: </strong>
-<h6> For example if the yaml file contained "libary" instead of "library", restrictor will not check for libraries and return an answer as if the "library" criterion was empty.</h6>
+- <strong> YAML file with syntax error: </strong> 
+For example if the yaml file contained "libary" instead of "library", restrictor will not check for libraries and return an answer as if the "library" criterion was empty.
 
-<strong> YAML file with logical error: </strong>
-<h6> For example if the yaml file contained a keyword with "exactly" restriction and after that the same keyword with "forbidden" restriction, the last occurance in the file will be applied.</h6>
+- <strong> YAML file with logical error: </strong>
+For example if the yaml file contained a keyword with "exactly" restriction and after that the same keyword with "forbidden" restriction, the last occurance in the file will be applied.

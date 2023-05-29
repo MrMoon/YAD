@@ -33,14 +33,6 @@ By default, it only comments out the class with its member functions. Adding the
 
 `commentCtrl c source.cpp "class class-name" -all True`
 
-## Error Scenarios:
-- Function doesn't exist in source.cpp 
-
-<div class="bs-callout bs-callout-warning">
-  <h4>- Note</h4>
-  For reference on how to write functions' parameters, please check <href a= "reference.md"> the reference page
-</div>
-  
 ## Output options
 <strong> -o </strong> followed by the path of the file you want the output to be saved in (The default is printing the output on the terminal).
 
@@ -51,3 +43,4 @@ By default, it only comments out the class with its member functions. Adding the
 - Write on the same file
 `commentCtrl d source.cpp -o source.cpp`
 
+For reference on how to write functions' parameters, please check [the reference page](./reference.md)
