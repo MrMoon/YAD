@@ -17,10 +17,10 @@ def scopeGetter(source:str, scope:str ):
         #Find where function or class is
         pos = codeParser.positions(source, type, scope)
         if pos == ["error"]:
-            return
+            return ["error"]
         if pos == []:
             print("Warning: " + type + "doesn't exist in " + source +" file")
-            return
+            return ["error"]
         searchPos = []
         count = 0
         for p in pos:
@@ -383,6 +383,8 @@ def wordRestrict(source: str  = typer.Argument(..., help="The path of the .cpp o
             source = f.read()
     else:
         source = scopeGetter(source, scope)
+        if source == ["error"]:
+            return False
     
     #Check if keyword exists and print true or false according to restriction
     if re.search(fr"(?i).*{re.escape(keyword)}.*", source):
