@@ -22,7 +22,7 @@ The target audience of YAD includes instructors and developers in any programmin
 * To delete YAD, run the following command
 * `pip uninstall Y4D`
 
-## Yad tools
+## YAD tools
 ### Isolator
 Isolates a function or list of functions or classes inside the code and replace them with their counterparts from the reference code.
 ### Restrictor
@@ -38,5 +38,13 @@ Extracts and deletes comments, comments out a given function or clas in the code
   YAD supports C++ with versions older than C++ 11.0
 </div>
 
-
-
+## Windows Users Issues
+In some cases YAD will be installed in a path that is not in your enivronment variables, in order to solve that do the following:
+* Copy the path of YAD provided by pip install command in CMD.
+* Press windows and break button, or go to settings then about.
+* Choose Advanced system settings.
+* Choose Environment Varibales.
+* Press on the Path then press Edit...
+* Press New then paste the path you copied in the first step.
+* Press ok then ok.
+* YAD should be ready to use in your windows CMD.
