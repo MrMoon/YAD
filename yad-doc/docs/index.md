@@ -12,8 +12,12 @@ The target audience of YAD includes instructors and developers in any programmin
 * To install YAD, run the following command
 * `pip install Y4D`
 
+## Updating YAD
+
 * To update YAD, run the following command
 * `pip install --upgrade Y4D`
+
+## Deleting YAD
 
 * To delete YAD, run the following command
 * `pip uninstall Y4D`
