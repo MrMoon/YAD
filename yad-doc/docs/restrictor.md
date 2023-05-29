@@ -1,7 +1,42 @@
 # Restrcitor
 
 ## What is Restrictor? 
-The Restrictor CLI tool allows the user to restrict the use of certain elements defined in a restrictions file such as libraries, keywords, global variables, extra functions, visibility of functions, recursion and iteration. 
+The Restrictor CLI tool allows the user to restrict the use of certain criterion or many criteria in a source file, the restriction follows one of three types of restrition explained below.
+
+##Types of Restriction:
+- <strong>at_least:</strong> must contain the search criterion in source.cpp, other components of the same criterion can exist.
+
+- <strong>exactly:</strong> must contain the search criterion in source.cpp, other components of the same criterion must not exist.
+
+- <strong>forbidden:</strong> must not contain the search criterion, other components of the same criterion can exist.
+
+##How does a single criterion restriction work?
+Each criterion has a unique character to use with the command, the characters are explained below, the output of the commands is True (following restriction) or False (not following restriction):
+
+- <strong>l</strong> used for restricting libraries, must input only the library name, this is the only criteria that doesn't allow scope definition (don't input #include).
+
+- <strong>k</strong> used for restricting keywords, this feature does an exact match search need so you need to input the exact keyword you are looking for (can be used to find recursion or iteration). <strong>Important note</strong>: preferably don't use global scope, specify a certain scope for accuracy.
+
+- <strong>c</strong> used for restricting classes, input class prototype.
+
+- <strong>f</strong> used for restricting functions without access types (functions outside of classes), input function prototype.
+
+- <strong>a</strong> used for restricting functions with their access types (Public/Protected/Private), input function access type followed by function prototype.
+
+###Example Commands:
+- <strong>l</strong> `restrict l source.cpp exactly iostream` -Checking if only iostream exists in code (it must exist).
+
+- <strong>k</strong> `restrict k source.cpp at_least follow "int follow(int, int)"` -Checking recursion exists (it must exist).
+
+- <strong>c</strong> `restrict c source.cpp forbidden "class shape" global` -Checking if class shape exists in code (it must not exist).
+
+- <strong>f</strong> `restrict f source.cpp at_least "int follow(int, float)" global` -Checking if function int follow(int, float) exists (it must exist).
+
+- <strong>a</strong> `restrict a source.cpp exactly "float shape::area()" "class shape" private` -Checks if the only private function in class shape is area() (it must exist).
+
+##How does many criteria restriction work?
+
+<strong>r</strong> used for restricting source file according to a restrictions file, the format of the restrictions file is explained below.
 
 ## Commands
 ` restrict source.cpp restrictions.yaml` -restrictions.yaml is a yaml file that contains different restrictions and criterias  
