@@ -12,9 +12,13 @@ It can chekc if both codes are exactly the same or if source.cpp has at least al
 
 
 ## Output options
-<strong> -o </strong> followed by either n or v (not case sensitive).\n
-<strong>n</strong>: number of violation (default option)\n
-<strong>v</strong>: verbose, list of violations with a minor explanation.\n
+<strong> -o </strong>
+
+-o is followed by either n or v (not case sensitive).
+
+<strong>n</strong>: number of violation (default option).
+
+<strong>v</strong>: verbose, list of violations with a minor explanation.
 
 ### Example command with option:
 `CheckAPI source.cpp compare.cpp exactly -o v`
