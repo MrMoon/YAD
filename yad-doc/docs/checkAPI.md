@@ -12,9 +12,7 @@ It can chekc if both codes are exactly the same or if source.cpp has at least al
 
 
 ## Output options
-<strong> -o </strong>
-
--o is followed by either n or v (not case sensitive).
+<strong> -o </strong> followed by either n or v (not case sensitive).
 
 <strong>n</strong>: number of violation (default option).
 
