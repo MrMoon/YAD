@@ -91,8 +91,8 @@ def restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
         if critOld != "start":
             if exactCount != 0 and compareCount != exactCount:
                 critAns = critAns & False
-            if critData['restriction'].lower() == 'exactly' and not critAns and not outputBool and not hide:
-                print(critOld + " are not exactly the same.")
+            # if critData['restriction'].lower() == 'exactly' and not critAns and not outputBool and not hide:
+            #     print(critOld + " are not exactly the same.")
             critAns = True
             compareCount = 0
             exactCount = 0
@@ -292,8 +292,8 @@ def restrict(source: str  = typer.Argument(..., help="The path of the .cpp or .h
     #To print the last criteria in the loop
     if exactCount != 0 and compareCount != exactCount:
         critAns = critAns & False
-    if critData['restriction'].lower() == "exactly" and not critAns and not outputBool and not hide:
-        print(critOld + " are not exactly the same.")
+    # if critData['restriction'].lower() == "exactly" and not critAns and not outputBool and not hide:
+    #     print(critOld + " are not exactly the same.")
     if outputBool:
         print(violationCount)
     
@@ -650,11 +650,11 @@ def checkAPI(source: str  = typer.Argument(..., help="The path of the .cpp or .h
                 const = ""
             if decl['access_type'] == "":
                 allFunctions.append(decl['prototype'].split(' ')[0] + unsigned + " " + decl['displayname'] + const)
-            elif decl['access_type'] == 'PRIVATE':
+            elif decl['access_type'] == 'private':
                 allPrivFunctions.append(virtual + decl['prototype'].split(' ')[0] + unsigned + " " + decl['parent_class'].split(' ')[1] + "::" + decl['displayname'] + const)
-            elif decl['access_type'] == 'PUBLIC':
+            elif decl['access_type'] == 'public':
                 allPublicFunctions.append(virtual + decl['prototype'].split(' ')[0] + unsigned + " " + decl['parent_class'].split(' ')[1] + "::" + decl['displayname'] + const)
-            elif decl['access_type'] == 'PROTECTED':
+            elif decl['access_type'] == 'protected':
                 allProtectedFunctions.append(virtual + decl['prototype'].split(' ')[0] + unsigned + " " + decl['parent_class'].split(' ')[1] + "::" + decl['displayname'] + const )
         elif decl['kind'] == "FUNCTION_DECL":
             if len(decl['prototype'].split('(')[0].split('**')) == 1 and len(decl['prototype'].split('(')[0].split('*')) == 1:
