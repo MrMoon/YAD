@@ -42,10 +42,56 @@ Each criterion has a unique character to use with the command, the characters ar
 
 `restrict r source.cpp rules.YAML` -Returns the number of missing functions/classes following by the number of extra functions/classes.
 
-<strong>Output Options: </strong> This command includes an output option <strong>-o</strong>, the output option is follow by n (number of missing and extra functions) which is the default value or v (verbose, a list of violations with a simple explanation) both n and v are not case sensitive, an example command including v:
+### Output Options
+
+This command includes an output option <strong>-o</strong>, the output option is follow by n (number of missing and extra functions) which is the default value or v (verbose, a list of violations with a simple explanation) both n and v are not case sensitive, an example command including v:
 
 `restrict r source.cpp rules.YAML -o v` -Returns a list of violations with minor explanation.
 
+### Restrictions File
+
+The restrictions file is a YAML file type, this file is required for the functionality of the many criteria command. The criteria included in this file are: Libraries, Keywords, Classes, Functions, Public Functions, Protected Functions, Private Functions. You can find a sample file in the GitHub files or a sample below:
+
+`
+libraries:
+  restriction: at_least
+  scope: global
+  names:
+    - algorithm
+    - iostream
+
+keywords:
+  restriction: exactly
+  scope: int functionC(int, int)
+  names:
+    - functionC
+
+classes:
+  restriction: exactly
+  scope: global
+  names:
+    - class test
+    - class Aclass
+
+functions:
+  restriction: exactly
+  scope: global
+  names:
+    - int functionA(int, int)
+    - template <typename T> int functionD(T)
+    - int * functionE(int, int)
+    - int ** functionF(int, int)
+    - int functionJ(int &)
+    - int functionK(int *)
+
+private_functions:
+  restriction: exactly
+  scope: global
+  names:
+    - int test::functionG(int, int) const
+    - virtual void test::functionH()
+    - static int test::functionI(int, int)
+`
 
 ## Commands
 ` restrict source.cpp restrictions.yaml` -restrictions.yaml is a yaml file that contains different restrictions and criterias  
