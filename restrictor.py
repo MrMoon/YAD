@@ -511,16 +511,6 @@ def funcRestrict(source: str  = typer.Argument(..., help="The path of the .cpp o
         data = codeParser.prepareData("restrictorGen.cpp", False)
         if data == ["error"]:
             return False
-    
-    #Making the regex suitable to find function no matter the user input
-    prototype = prototype.strip()
-    prototypeName = prototype.split("(")[0] + "\s*"
-    prototypeName += '('
-    prototypeVars = prototype.split("(")[1].split(")")[0].split(",")
-    prototypeRegex = "(?:(?<=\s)|(?<=^))" + prototypeName
-    for p in prototypeVars:
-        prototypeRegex += ".*" + p.strip().split(' ')[0] + ".*,"
-    prototypeRegex = prototypeRegex[:-1] + ').*\n*.*{[\s\S]*}(?=\s|$)'
 
     empty = []
     #Check if function exists and print true or false according to restriction
@@ -594,7 +584,7 @@ def accessRestrict(source: str  = typer.Argument(..., help="The path of the .cpp
     spelling = prototype.split('(')[0].split(' ')[-1].split('::')[-1]
     
     for decl in data['nodes']:
-        if decl['kind'] == "CXX_METHOD" and decl['spelling'] == spelling and decl['prototype'] == proto and decl['access_type'] == type.lower():
+        if decl['kind'] == "CXX_METHOD" and decl['spelling'] == spelling and decl['prototype'].replace(" ","") == proto.replace(" ","") and decl['access_type'] == type.lower():
             return funcRestrict(source, restriction, prototype, scope, hide)
     if not hide:
         print("False")
