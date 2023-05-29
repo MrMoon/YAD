@@ -336,10 +336,11 @@ def libRestrict(source: str  = typer.Argument(..., help="The path of the .cpp or
     else:
         existFlag = False
         header = re.findall(r'^#include\s*[\s\S][<"]\S+[>"]$', source, flags=re.MULTILINE)
-        lib1 = "#include <" + lib + ">"
-        lib2 = "#include \""+ lib + "\""
+        lib1 = "#include<" + lib + ">"
+        lib2 = "#include\""+ lib + "\""
 
         for library in header:
+            library = library.replace(" ","")
             if library == lib1 or library == lib2:
                 existFlag = True
 
@@ -386,11 +387,12 @@ def wordRestrict(source: str  = typer.Argument(..., help="The path of the .cpp o
             source = f.read()
     else:
         source = scopeGetter(source, scope)
+        print(source)
         if source == ["error"]:
             return False
     
     #Check if keyword exists and print true or false according to restriction
-    if re.search(fr"(?i).*{re.escape(keyword)}.*", source):
+    if re.search(fr"(?i).*return\s+{re.escape(keyword)}.*", source):
         if restriction.lower() == "at_least" or restriction.lower() == "exactly":
             if not hide:
                 print("True")
