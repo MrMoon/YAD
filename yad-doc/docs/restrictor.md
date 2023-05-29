@@ -36,7 +36,7 @@ Each criterion has a unique character to use with the command, the characters ar
 
 ## How does many criteria restriction work?
 
-<strong>r:</strong> used for restricting source file according to a YAML restrictions file, the format of the restrictions file is explained in Restrictions File section found below.
+- <strong>r:</strong> used for restricting source file according to a YAML restrictions file, the format of the restrictions file is explained in Restrictions File section found below.
 
 ### Many Criteria Command:
 
