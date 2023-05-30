@@ -308,7 +308,7 @@ def prepareData (source: str, hide: bool):
     commentController.includeRevert(source)
     return data
 
-def positions ( source: str, type: str, prototype: str, option = 0):
+def positions ( source: str, type: str, prototype: str, checkerror, option = 0):
     source_path = Path(source)
     if source_path.exists() == False:
         print("Error: " + source + " doesn't exist")
@@ -325,7 +325,7 @@ def positions ( source: str, type: str, prototype: str, option = 0):
             destination.write(content)
         source = destination_file
         
-    data = prepareData(source, True)
+    data = prepareData(source, checkerror)
     if data == ["error"]:
         return data
     pos =[]

@@ -15,7 +15,7 @@ def scopeGetter(source:str, scope:str ):
         type = "function"
     
     #Find where function or class is
-    pos = codeParser.positions(source, type, scope)
+    pos = codeParser.positions(source, type, scope, True)
     if pos == ["error"]:
         return ["error"]
     if pos == []:

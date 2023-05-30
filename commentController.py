@@ -8,7 +8,7 @@ app = typer.Typer()
 def commentMaker(source: str, type: str, name: str, isolate =0, option=0, output = ""):
 
     #Find where the classes or functions start
-    position = codeParser.positions(source, type , name, option)
+    position = codeParser.positions(source, type , name, option, False)
     if position == ["error"]:
         return
     if position == []:
