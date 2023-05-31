@@ -12,7 +12,7 @@ import pstats
 
 from argparse import ArgumentParser
 
-n = 100
+n = 500
 dir_name = os.path.dirname(__file__)
 
 def generate():
@@ -43,7 +43,7 @@ def test():
         checkAPI.main(file_name, dest_file, 'at_least')
     
 if __name__ == "__main__":
-    start = time.time()
+    start_time = time.time()
 
     generate()
     print('Generation Done')
@@ -61,3 +61,4 @@ if __name__ == "__main__":
         print('File Written')
         print('File Closed')
     print('Process finished in %s seconds' % (time.time() - start_time))
+    print('use snakeviz output.dat to visualize the profiler')
