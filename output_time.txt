@@ -1,0 +1,142 @@
+Wed May 31 19:53:18 2023    output.dat
+
+         266629246 function calls (221719246 primitive calls) in 217.503 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+     3000   32.744    0.011   32.744    0.011 {method 'writelines' of '_io._IOBase' objects}
+     4500   30.791    0.007   30.944    0.007 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:2641(from_source)
+     9000   27.210    0.003   27.230    0.003 {method 'sub' of '_sre.SRE_Pattern' objects}
+82249500/41145000   19.977    0.000   33.813    0.000 /usr/lib/python3.6/json/encoder.py:333(_iterencode_dict)
+     4500   10.165    0.002  169.439    0.038 /mnt/DATA2/y4d/YAD/codeParser.py:218(prepareData)
+     4500    8.381    0.002    8.695    0.002 {method 'readlines' of '_io._IOBase' objects}
+43102500/41118000    8.015    0.000   25.909    0.000 /usr/lib/python3.6/json/encoder.py:277(_iterencode_list)
+  1467000    6.828    0.000    8.214    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:222(_get_instantiation)
+ 41145000    6.653    0.000   40.469    0.000 /usr/lib/python3.6/json/encoder.py:412(_iterencode)
+ 30309000    3.927    0.000    3.927    0.000 {built-in method builtins.isinstance}
+     4500    3.771    0.001   44.760    0.010 /usr/lib/python3.6/json/encoder.py:182(encode)
+   505000    3.615    0.000    5.721    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1768(get_children)
+  2128500    3.028    0.000    7.794    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:209(from_result)
+  2128500    2.727    0.000    3.431    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:85(value)
+    12000    2.709    0.000    2.785    0.000 {built-in method io.open}
+     4500    2.692    0.001    2.692    0.001 /usr/lib/python3.6/json/decoder.py:345(raw_decode)
+  5265000    2.559    0.000    2.696    0.000 {built-in method builtins.hasattr}
+ 14200500    2.350    0.000    2.350    0.000 {built-in method _json.encode_basestring_ascii}
+  4027500    1.946    0.000    2.497    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:630(from_id)
+  2128500    1.944    0.000    1.944    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:206(__del__)
+   489000    1.893    0.000    4.457    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1532(mangled_name)
+   676500    1.838    0.000    5.534    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1510(spelling)
+2314500/493500    1.809    0.000    7.279    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1786(walk_preorder)
+  3538500    1.683    0.000    3.810    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1505(kind)
+     4500    1.662    0.000    2.295    0.001 {method 'read' of '_io.TextIOWrapper' objects}
+   489000    1.230    0.000    3.413    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1518(displayname)
+   978000    1.200    0.000    2.901    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1584(type)
+   489000    1.113    0.000    1.392    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1551(extent)
+   978000    1.093    0.000    1.437    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1540(location)
+   489000    1.071    0.000    3.220    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:2304(spelling)
+  2128500    1.021    0.000    4.452    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:99(to_python_string)
+   517500    0.977    0.000    1.937    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1772(visitor)
+   489000    0.965    0.000    1.718    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1573(access_specifier)
+   705000    0.898    0.000    0.898    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1410(__eq__)
+     1000    0.885    0.001  144.533    0.145 /mnt/DATA2/y4d/YAD/isolator.py:80(isolateClass)
+   151371    0.815    0.000    0.815    0.000 {built-in method _codecs.utf_8_decode}
+   489000    0.809    0.000    1.347    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:2147(from_result)
+   978000    0.767    0.000    8.850    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:257(line)
+   982500    0.710    0.000    0.861    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:2329(__init__)
+  2128500    0.704    0.000    0.704    0.000 {method 'decode' of 'bytes' objects}
+      500    0.634    0.001   72.388    0.145 /mnt/DATA2/y4d/YAD/isolator.py:9(isolateFunction)
+   489000    0.613    0.000    0.613    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1423(is_const_method)
+  4445500    0.587    0.000    0.587    0.000 {built-in method builtins.len}
+   489000    0.567    0.000    0.816    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1925(__repr__)
+        1    0.557    0.557  217.503  217.503 performance_testing.py:32(test)
+  3912000    0.540    0.000    0.540    0.000 {built-in method _ctypes.byref}
+   978000    0.502    0.000    0.502    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:620(name)
+     9000    0.481    0.000    0.481    0.000 {method 'join' of 'str' objects}
+   489000    0.480    0.000    0.480    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:310(end)
+     4500    0.452    0.000    0.454    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:2748(__del__)
+   489000    0.446    0.000    0.446    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1467(is_static_method)
+   489000    0.415    0.000    0.415    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1473(is_virtual_method)
+   489000    0.406    0.000    0.406    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1461(is_pure_virtual_method)
+   183000    0.394    0.000    1.154    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1697(semantic_parent)
+     1000    0.389    0.000   48.452    0.048 /mnt/DATA2/y4d/YAD/commentController.py:134(CommentOutClass)
+   183000    0.386    0.000    0.666    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1852(from_cursor_result)
+     1500    0.383    0.000   72.070    0.048 /mnt/DATA2/y4d/YAD/commentController.py:8(commentMaker)
+   520500    0.327    0.000    0.327    0.000 {method 'split' of 'str' objects}
+     4500    0.295    0.000  171.054    0.038 /mnt/DATA2/y4d/YAD/codeParser.py:309(positions)
+     4500    0.279    0.000    0.279    0.000 {built-in method posix.stat}
+   489000    0.264    0.000    0.394    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:262(column)
+     3500    0.259    0.000    0.314    0.000 /mnt/DATA2/y4d/YAD/codeParser.py:130(findLocationClass)
+   517500    0.250    0.000    0.880    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1413(__ne__)
+     4500    0.234    0.000   45.003    0.010 /usr/lib/python3.6/json/__init__.py:183(dumps)
+   978000    0.218    0.000    0.218    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1713(translation_unit)
+     4500    0.194    0.000    0.205    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:2570(create)
+      500    0.192    0.000   24.199    0.048 /mnt/DATA2/y4d/YAD/commentController.py:158(CommentOutFunction)
+  1035000    0.184    0.000    0.184    0.000 {method 'append' of 'list' objects}
+   505000    0.169    0.000    0.169    0.000 {built-in method builtins.iter}
+   151371    0.133    0.000    0.948    0.000 /usr/lib/python3.6/codecs.py:318(decode)
+   492000    0.125    0.000    0.125    0.000 {method 'lower' of 'str' objects}
+    13500    0.075    0.000    0.075    0.000 {method 'encode' of 'str' objects}
+   493500    0.072    0.000    0.072    0.000 {method 'items' of 'dict' objects}
+   511500    0.065    0.000    0.065    0.000 {built-in method builtins.id}
+    16000    0.047    0.000    0.379    0.000 /mnt/DATA2/y4d/YAD/codeParser.py:209(hasInitializerList)
+    28500    0.038    0.000    0.048    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:662(is_expression)
+     4500    0.038    0.000    0.056    0.000 /usr/lib/python3.6/pathlib.py:51(parse_parts)
+     4500    0.031    0.000    0.077    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:2751(cursor)
+    12000    0.031    0.000    0.031    0.000 {built-in method _locale.nl_langinfo}
+   177500    0.030    0.000    0.030    0.000 {method 'startswith' of 'str' objects}
+     1000    0.028    0.000    0.038    0.000 /mnt/DATA2/y4d/YAD/codeParser.py:6(findLocationFunction)
+     4500    0.025    0.000    0.037    0.000 /usr/lib/python3.6/json/encoder.py:204(iterencode)
+     4500    0.024    0.000    0.044    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:1828(from_result)
+     4500    0.023    0.000    0.088    0.000 /usr/lib/python3.6/pathlib.py:631(_parse_args)
+     9000    0.022    0.000    0.022    0.000 {method 'match' of '_sre.SRE_Pattern' objects}
+    12000    0.021    0.000    0.052    0.000 /usr/lib/python3.6/_bootlocale.py:23(getpreferredencoding)
+     9000    0.020    0.000    0.020    0.000 /usr/lib/python3.6/re.py:324(_subx)
+     9000    0.020    0.000    0.020    0.000 /usr/lib/python3.6/re.py:286(_compile)
+     4500    0.020    0.000    2.739    0.001 /usr/lib/python3.6/json/decoder.py:334(decode)
+     4500    0.020    0.000    0.132    0.000 /usr/lib/python3.6/pathlib.py:998(__new__)
+     4500    0.018    0.000    0.020    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:2579(__del__)
+     4500    0.017    0.000    0.025    0.000 /usr/lib/python3.6/pathlib.py:691(__str__)
+     4500    0.016    0.000    0.019    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:75(__init__)
+     4500    0.016    0.000    0.107    0.000 /usr/lib/python3.6/pathlib.py:651(_from_parts)
+     4500    0.016    0.000    0.023    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:2738(__init__)
+     4500    0.015    0.000    2.759    0.001 /usr/lib/python3.6/json/__init__.py:302(loads)
+     4500    0.015    0.000    0.028    0.000 /usr/lib/python3.6/pathlib.py:785(suffix)
+     4500    0.014    0.000    0.318    0.000 /usr/lib/python3.6/pathlib.py:385(wrapped)
+     9000    0.014    0.000   27.264    0.003 /usr/lib/python3.6/re.py:184(sub)
+     4500    0.014    0.000   30.957    0.007 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:2586(parse)
+     9000    0.014    0.000    0.021    0.000 /usr/lib/python3.6/codecs.py:308(__init__)
+     1000    0.012    0.000    0.012    0.000 {built-in method builtins.print}
+     4500    0.011    0.000    0.012    0.000 /usr/lib/python3.6/json/encoder.py:259(_make_iterencode)
+     9000    0.010    0.000    0.086    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:103(b)
+     4500    0.010    0.000    0.030    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:91(from_param)
+    28500    0.009    0.000    0.009    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:617(from_param)
+     4500    0.009    0.000    0.009    0.000 /usr/lib/python3.6/json/encoder.py:104(__init__)
+     9000    0.008    0.000    0.008    0.000 {built-in method sys.intern}
+     4500    0.008    0.000    0.334    0.000 /usr/lib/python3.6/pathlib.py:1331(exists)
+     4500    0.008    0.000    0.326    0.000 /usr/lib/python3.6/pathlib.py:1153(stat)
+    18000    0.007    0.000    0.007    0.000 /home/mrmoon/.local/lib/python3.6/site-packages/clang/cindex.py:2333(from_param)
+     4500    0.007    0.000    0.009    0.000 /usr/lib/python3.6/pathlib.py:777(name)
+     9000    0.007    0.000    0.007    0.000 /usr/lib/python3.6/codecs.py:259(__init__)
+     1500    0.006    0.000    0.010    0.000 /usr/lib/python3.6/posixpath.py:75(join)
+     4500    0.005    0.000    0.007    0.000 /usr/lib/python3.6/pathlib.py:674(_format_parsed_parts)
+     4500    0.005    0.000    0.005    0.000 /usr/lib/python3.6/pathlib.py:1008(_init)
+     4500    0.005    0.000    0.005    0.000 /usr/lib/python3.6/pathlib.py:282(splitroot)
+     9000    0.004    0.000    0.004    0.000 {method 'end' of '_sre.SRE_Match' objects}
+     4500    0.004    0.000    0.004    0.000 {method 'rfind' of 'str' objects}
+    10000    0.004    0.000    0.004    0.000 {method 'replace' of 'str' objects}
+     4500    0.003    0.000    0.003    0.000 {built-in method __new__ of type object at 0x9d12c0}
+     6000    0.003    0.000    0.003    0.000 {built-in method posix.fspath}
+     3000    0.003    0.000    0.003    0.000 /usr/lib/python3.6/codecs.py:185(__init__)
+      500    0.001    0.000    0.010    0.000 /mnt/DATA2/y4d/YAD/restrictor.py:573(checkAPI)
+      500    0.001    0.000    0.011    0.000 /mnt/DATA2/y4d/YAD/checkAPI.py:7(main)
+     4500    0.001    0.000    0.001    0.000 {method 'reverse' of 'list' objects}
+     1500    0.001    0.000    0.002    0.000 /usr/lib/python3.6/posixpath.py:41(_get_sep)
+     2500    0.001    0.000    0.001    0.000 {method 'strip' of 'str' objects}
+      500    0.001    0.000    0.004    0.000 /mnt/DATA2/y4d/YAD/restrictor.py:54(restrict)
+     1500    0.000    0.000    0.000    0.000 {method 'endswith' of 'str' objects}
+        1    0.000    0.000  217.503  217.503 {built-in method builtins.exec}
+        1    0.000    0.000  217.503  217.503 <string>:1(<module>)
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+
+
