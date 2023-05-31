@@ -14,7 +14,7 @@ def isolateFunction(source: str  = typer.Argument(..., help="The source code tha
     This tool will isolate out a function, the function will be taken from source and replace the one in destination or add one.
     """
     
-    findFunction = codeParser.positions(source,"function", prototype, True)
+    findFunction = codeParser.positions(source,"function", prototype)
     if findFunction == ["error"]:
         return
     if findFunction == []:
@@ -28,11 +28,11 @@ def isolateFunction(source: str  = typer.Argument(..., help="The source code tha
     #check if its a member function and parent class exists in destination file 
     if findFunction[2] != "function" and findFunction[2] != "template_function":
         parent_class = prototype.split("::")[0].strip().split(" ")[-1]
-        findClass = codeParser.positions(destination, "class", "class " + parent_class, False)
+        findClass = codeParser.positions(destination, "class", "class " + parent_class)
         if findClass == ["error"]:
             return
         if findClass == []:
-            findClass = codeParser.positions(destination, "struct", "struct " + parent_class, False)
+            findClass = codeParser.positions(destination, "struct", "struct " + parent_class)
             if findClass == ["error"]:
                 return
             if findClass == []:
@@ -90,7 +90,7 @@ def isolateClass(
     if all.lower() == "false":
         option = 1
     type = prototype.split(" ")[0]
-    position = codeParser.positions(source, type, prototype, True, option)
+    position = codeParser.positions(source, type, prototype, option)
     
     if position == ["error"]:
         return
@@ -116,7 +116,7 @@ def isolateClass(
             things += lines[start_line - 1:end_line]
     
     #checking if class already exists in destination code and commenting it out
-    class_position = codeParser.positions(destination, type, prototype, False, 1)
+    class_position = codeParser.positions(destination, type, prototype, 1)
     if class_position == ["error"]:
         return
     commentController.CommentOutClass(destination, prototype, all, 1, destination)
