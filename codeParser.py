@@ -236,9 +236,9 @@ def prepareData (source: str):
         access_type =""
         parent_class = ""
         initializer_list = "false"
-        cursor_kind = CursorKind
+
         #Check if the constructor has an expression initializer list
-        if node.kind == cursor_kind.CONSTRUCTOR:
+        if node.kind == clang.cindex.CursorKind.CONSTRUCTOR:
             if hasInitializerList(node):
                 initializer_list = "true"
                 
@@ -251,25 +251,25 @@ def prepareData (source: str):
             parent = node.semantic_parent
             if parent is None:
                 parent_class=""
-            elif parent.kind == cursor_kind.CLASS_DECL:
+            elif parent.kind == clang.cindex.CursorKind.CLASS_DECL:
                 parent_class = "class " + str(parent.spelling)
-            elif parent.kind == cursor_kind.STRUCT_DECL:
+            elif parent.kind == clang.cindex.CursorKind.STRUCT_DECL:
                 parent_class = "struct " + str(parent.spelling)
             
-        if node.kind == cursor_kind.CLASS_DECL:
+        if node.kind == clang.cindex.CursorKind.CLASS_DECL or node.kind == clang.cindex.CursorKind.STRUCT_DECL:
             classPointer = 0
             friendFlag = False
             
-        elif node.kind == cursor_kind.CXX_BASE_SPECIFIER:
+        elif node.kind == clang.cindex.CursorKind.CXX_BASE_SPECIFIER:
             inh = node.spelling
             output["nodes"][classPointer]["inherits_from"].append(inh)
 
-        elif node.kind == cursor_kind.FRIEND_DECL:
+        elif node.kind == clang.cindex.CursorKind.FRIEND_DECL:
             friendFlag = True
 
         elif friendFlag:
             friend = node.spelling
-            if len(friend.split("class")) == 1: #check this: or len(friend.split("struct")):
+            if len(friend.split("class")) == 1 or len(friend.split("struct")) ==1:
                 friend = node.type.spelling.split('(')[0] + node.displayname
             output["nodes"][classPointer]["friend_with"].append(friend)
             friendFlag = False
