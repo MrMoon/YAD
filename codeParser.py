@@ -1,5 +1,6 @@
 import json
 import clang.cindex
+from clang.cindex import CursorKind
 import re
 from pathlib import Path
 
@@ -235,8 +236,9 @@ def prepareData (source: str):
         access_type =""
         parent_class = ""
         initializer_list = "false"
+        cursor_kind = CursorKind
         #Check if the constructor has an expression initializer list
-        if node.kind == clang.cindex.CursorKind.CONSTRUCTOR:
+        if node.kind == cursor_kind.CONSTRUCTOR:
             if hasInitializerList(node):
                 initializer_list = "true"
                 
@@ -249,20 +251,20 @@ def prepareData (source: str):
             parent = node.semantic_parent
             if parent is None:
                 parent_class=""
-            elif parent.kind == clang.cindex.CursorKind.CLASS_DECL:
+            elif parent.kind == cursor_kind.CLASS_DECL:
                 parent_class = "class " + str(parent.spelling)
-            elif parent.kind == clang.cindex.CursorKind.STRUCT_DECL:
+            elif parent.kind == cursor_kind.STRUCT_DECL:
                 parent_class = "struct " + str(parent.spelling)
             
-        if node.kind == clang.cindex.CursorKind.CLASS_DECL:
+        if node.kind == cursor_kind.CLASS_DECL:
             classPointer = 0
             friendFlag = False
             
-        elif node.kind == clang.cindex.CursorKind.CXX_BASE_SPECIFIER:
+        elif node.kind == cursor_kind.CXX_BASE_SPECIFIER:
             inh = node.spelling
             output["nodes"][classPointer]["inherits_from"].append(inh)
 
-        elif node.kind == clang.cindex.CursorKind.FRIEND_DECL:
+        elif node.kind == cursor_kind.FRIEND_DECL:
             friendFlag = True
 
         elif friendFlag:
