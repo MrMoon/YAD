@@ -1,9 +1,12 @@
 import json
-from retrie.retrie import Replacer
+import time
+from flashtext import KeywordProcessor
 import clang.cindex
 from clang.cindex import CursorKind
 import re
 from pathlib import Path
+
+keyword_processor = KeywordProcessor()
 
 def findLocationFunction(data, prototype: str, source):
     #Check for static, virtual, pure virtual, and constructors
@@ -226,12 +229,12 @@ def prepareData (source: str):
     #Get Code from source
     with open(source, 'r') as file:
         source = file.read()
-
+    start_time = time.time()
     #String manipulate source for parse to work (removing libraries and using namespace)
-    replacement_mapping = dict(zip(['#include', 'using namespace'], ["//#include", "//using namespace"]))
-    replacer = Replacer(replacement_mapping, match_substrings=True, re_flags= re.MULTILINE)
-    replacer.compile()
-    source = replacer.replace(source)
+    keyword_processor.add_keyword('#include', '//#include')
+    keyword_processor.add_keyword('using namespace', '//using namespace')
+    source = keyword_processor.replace_keywords(source);
+    print('Process finished in %s seconds' % (time.time() - start_time))
 
     index = clang.cindex.Index.create()
     tu = index.parse('dud.cpp', unsaved_files=[('dud.cpp', source)])
