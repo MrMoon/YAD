@@ -26,7 +26,7 @@ def isolateFunction(source: str  = typer.Argument(..., help="The source code tha
         lines = source_file.readlines() 
     
     #check if its a member function and parent class exists in destination file 
-    if findFunction[2] != "function" and findFunction[2] != "template_function":
+    if findFunction[2] != "function" and findFunction[2] != "template_function" and findFunction[2] != "main":
         parent_class = prototype.split("::")[0].strip().split(" ")[-1]
         findClass = codeParser.positions(destination, "class", "class " + parent_class)
         if findClass == ["error"]:
@@ -62,6 +62,8 @@ def isolateFunction(source: str  = typer.Argument(..., help="The source code tha
     #functions insertion
     if findFunction[2] == "function" or findFunction[2] == "template_function":
         lines = [prototype +";\n"]+ lines[0:] + ['\n'] + implementation  
+    elif findFunction[2] == "main":
+        lines = lines[0:] + ['\n'] + implementation  
     #member functions insertion 
     else:
         #if function implemented outside the class 

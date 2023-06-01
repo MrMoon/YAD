@@ -76,7 +76,11 @@ def findLocationFunction(data, prototype: str, source):
                 if is_static == item['is_static_method'] and is_virtual == item['is_virtual_method'] and is_pure == item['is_pure']:
                     end = item['end']
                     start = item['start']
-                    pos += [start, end, type, item['access_type']]
+                    if name == "main":
+                        pos += [start, end, "main", item['access_type']]
+                    else:
+                        pos += [start, end, type, item['access_type']]
+                    
     if type == "member_function":
         for item in data['nodes']:
             if item['kind'] == "CXX_METHOD" and item['spelling'].replace(" ", "") == name and item['prototype'].replace(" ", "") == qualtype and item['parent_class']!="" and parent_class == item['parent_class'].split(" ")[1]:
@@ -231,7 +235,7 @@ def prepareData (source: str):
 
     index = clang.cindex.Index.create()
     tu = index.parse('dud.cpp', unsaved_files=[('dud.cpp', source)])
-    
+        
     output = {"nodes": []}
     friendFlag = False
     classPointer = -1
