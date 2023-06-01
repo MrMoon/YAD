@@ -1,5 +1,5 @@
-per/test*
+per
 __pycache__
 testfiles
-output.*
+output*
 

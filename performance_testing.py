@@ -12,7 +12,7 @@ import pstats
 
 from argparse import ArgumentParser
 
-n = 500
+n = 10
 dir_name = os.path.dirname(__file__)
 
 def generate():
@@ -28,7 +28,6 @@ def generate():
         print(f'File copy {i+1} created.')
         
 
-
 def test():
     for i in range(n):
         # construct the filename
@@ -41,10 +40,11 @@ def test():
         isolator.isolateClass(file_name, dest_file, 'class Fclass', 'false')
         isolator.isolateFunction(file_name, dest_file, 'Fclass::Fclass()')
         checkAPI.main(file_name, dest_file, 'at_least')
+        print(f'test{i+1}.cpp is DONE')
     
 if __name__ == "__main__":
     start_time = time.time()
-
+    
     generate()
     print('Generation Done')
     
@@ -57,8 +57,9 @@ if __name__ == "__main__":
     with open(time_output, 'w') as f:
         print('File Opened')
         p = pstats.Stats('output.dat', stream=f)
-        p.sort_stats("time").print_stats()
         print('File Written')
-        print('File Closed')
+        p.sort_stats("time").print_stats()
+
+    print('File Closed')
     print('Process finished in %s seconds' % (time.time() - start_time))
     print('use snakeviz output.dat to visualize the profiler')

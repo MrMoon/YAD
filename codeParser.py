@@ -1,4 +1,5 @@
 import json
+from retrie.retrie import Replacer
 import clang.cindex
 from clang.cindex import CursorKind
 import re
@@ -223,8 +224,10 @@ def prepareData (source: str):
         source = file.read()
 
     #String manipulate source for parse to work (removing libraries and using namespace)
-    source = re.sub(r'^#include\s*[\s\S][<"]\S+[>"]$', r'// \g<0>', source, flags=re.MULTILINE)
-    source = re.sub(r'^\s*using\s+namespace\s+\S+;$', r'// \g<0>', source, flags=re.MULTILINE)
+    replacement_mapping = dict(zip(['#include', 'using namespace'], ["//#include", "//using namespace"]))
+    replacer = Replacer(replacement_mapping, match_substrings=True, re_flags= re.MULTILINE)
+    replacer.compile()
+    source = replacer.replace(source)
 
     index = clang.cindex.Index.create()
     tu = index.parse('dud.cpp', unsaved_files=[('dud.cpp', source)])
@@ -317,13 +320,14 @@ def positions ( source: str, type: str, prototype: str, option = 0):
     #Checking if it is a .h file and converting it to .cpp, due to libclang requirements
     file_extension = source_path.suffix
     if file_extension == ".h":
-        file_name = source_path.stem
-        with open(source, 'r') as source:
-            content = source.read()
-        destination_file = file_name + ".cpp"
-        with open(destination_file, 'w') as destination:
-            destination.write(content)
-        source = destination_file
+        os.rename(source_path, source_path.stem + '.cpp')
+        # file_name = source_path.stem
+        # with open(source, 'r') as source:
+        #     content = source.read()
+        # destination_file = file_name + ".cpp"
+        # with open(destination_file, 'w') as destination:
+        #     destination.write(content)
+        source = source_path
         
     #Compiling the code
     data = prepareData(source)
