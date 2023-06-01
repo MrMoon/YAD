@@ -1,4 +1,4 @@
-per
+per/test*
 __pycache__
 testfiles
 output.*
